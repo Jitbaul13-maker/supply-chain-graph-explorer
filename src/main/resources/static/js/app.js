@@ -1,0 +1,531 @@
+const API = "/api/graph";
+
+let selectedDependencyId = null;
+
+let searchTimer = null;
+
+const searchInput = document.getElementById("searchInput");
+
+searchInput.addEventListener("input", function () {
+
+    clearTimeout(searchTimer);
+
+    const query = this.value.trim();
+
+    if (!query) {
+        document.getElementById("searchResults").innerHTML = "";
+        return;
+    }
+
+    searchTimer = setTimeout(() => {
+        search();
+    }, 250);
+});
+// ---------------------------------------------------------
+// SEARCH
+// ---------------------------------------------------------
+
+document
+    .getElementById("searchButton")
+    .addEventListener("click", search);
+
+document
+    .getElementById("searchInput")
+    .addEventListener("keydown", function (event) {
+
+        if (event.key === "Enter") {
+            search();
+        }
+    });
+
+
+async function search() {
+
+    const query =
+        document.getElementById("searchInput").value.trim();
+
+    if (!query) {
+        return;
+    }
+
+    clearError();
+
+    try {
+
+        const response =
+            await fetch(`${API}/search?q=${encodeURIComponent(query)}`);
+
+        if (!response.ok) {
+            throw new Error("Search failed");
+        }
+
+        const results = await response.json();
+
+        renderSearchResults(results);
+
+    } catch (error) {
+
+        showError(error.message);
+    }
+}
+
+
+// ---------------------------------------------------------
+// SEARCH RESULTS
+// ---------------------------------------------------------
+
+function renderSearchResults(results) {
+
+    const container =
+        document.getElementById("searchResults");
+
+    container.innerHTML = "";
+
+    if (results.length === 0) {
+
+        container.innerHTML =
+            `<div class="empty">No matching services or dependencies.</div>`;
+
+        return;
+    }
+
+    results.forEach(node => {
+
+        const element =
+            document.createElement("div");
+
+        element.className = "search-result";
+
+        element.innerHTML = `
+            <div class="search-result-main">
+                <strong>${escapeHtml(node.name)}</strong>
+                <span class="result-badge ${node.type.toLowerCase()}">
+                    ${escapeHtml(node.type)}
+                </span>
+            </div>
+        `;
+
+        element.addEventListener("click", () => {
+
+            document.getElementById("searchInput").value =
+                node.name;
+
+            container.innerHTML = "";
+
+            if (node.type === "Dependency") {
+
+                loadDependency(node.id, node.name);
+
+            } else {
+
+                loadServiceDependencies(node.id, node.name);
+            }
+        });
+
+        container.appendChild(element);
+    });
+}
+
+
+// ---------------------------------------------------------
+// DEPENDENCY OVERVIEW
+// ---------------------------------------------------------
+
+async function loadDependency(id, name) {
+
+    selectedDependencyId = id;
+
+    document
+        .getElementById("targetSection")
+        .classList.remove("hidden");
+
+    document
+        .getElementById("targetName")
+        .textContent = name;
+
+    showLoading();
+
+    try {
+
+        const response =
+            await fetch(`${API}/overview/${encodeURIComponent(id)}`);
+
+        if (!response.ok) {
+
+            const error = await response.json();
+
+            throw new Error(
+                error.message || "Unable to load graph"
+            );
+        }
+
+        const data = await response.json();
+
+        renderOverview(data);
+
+    } catch (error) {
+
+        showError(error.message);
+
+    } finally {
+
+        hideLoading();
+    }
+}
+
+
+// ---------------------------------------------------------
+// SERVICE SELECTION
+// ---------------------------------------------------------
+
+async function loadServiceDependencies(id, name) {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API}/dependencies/${encodeURIComponent(id)}`
+            );
+
+        if (!response.ok) {
+            throw new Error("Unable to load service dependencies");
+        }
+
+        const dependencies = await response.json();
+
+        const container =
+            document.getElementById("searchResults");
+
+        container.innerHTML = `
+            <div class="result-type">
+                Dependencies of ${escapeHtml(name)}
+            </div>
+        `;
+
+        dependencies.forEach(dependency => {
+
+            const element =
+                document.createElement("div");
+
+            element.className = "search-result";
+
+            element.innerHTML = `
+                <strong>${escapeHtml(dependency.name)}</strong>
+                <div class="result-type">Dependency</div>
+            `;
+
+            element.addEventListener("click", () => {
+
+                loadDependency(
+                    dependency.id,
+                    dependency.name
+                );
+
+            });
+
+            container.appendChild(element);
+        });
+
+    } catch (error) {
+
+        showError(error.message);
+    }
+}
+
+
+// ---------------------------------------------------------
+// OVERVIEW RENDERING
+// ---------------------------------------------------------
+
+function renderOverview(data) {
+
+    document.getElementById("serviceCount")
+        .textContent = data.affectedServices.length;
+
+    document.getElementById("ownerCount")
+        .textContent = data.owners.length;
+
+    document.getElementById("regionCount")
+        .textContent = data.regions.length;
+
+    document.getElementById("alternativeCount")
+        .textContent = data.alternatives.length;
+
+    renderBlastRadius(data.affectedServices);
+
+    renderOwners(data.owners);
+
+    renderRegions(data.regions);
+
+    renderAlternatives(data.alternatives);
+}
+
+
+// ---------------------------------------------------------
+// BLAST RADIUS
+// ---------------------------------------------------------
+
+function renderBlastRadius(services) {
+
+     const container =
+         document.getElementById("blastRadius");
+
+     container.innerHTML = "";
+
+     if (services.length === 0) {
+
+         container.innerHTML =
+             `<div class="empty">No affected services.</div>`;
+
+         return;
+     }
+
+     const targetName =
+         document.getElementById("targetName").textContent;
+
+     const graph = document.createElement("div");
+     graph.className = "graph-container";
+
+     // Central dependency node
+     const targetNode = document.createElement("div");
+     targetNode.className = "graph-target-node";
+
+     targetNode.innerHTML = `
+         <span class="graph-node-type">DEPENDENCY</span>
+         <strong>${escapeHtml(targetName)}</strong>
+     `;
+
+     graph.appendChild(targetNode);
+
+
+     // Connection area
+     const connections = document.createElement("div");
+     connections.className = "graph-connections";
+
+     services.forEach(service => {
+
+         const connection =
+             document.createElement("div");
+
+         connection.className = "graph-connection";
+
+         const line =
+             document.createElement("div");
+
+         line.className = "graph-line";
+
+         const serviceNode =
+             document.createElement("div");
+
+         serviceNode.className = "graph-service-node";
+
+         serviceNode.innerHTML = `
+             <div>
+                 <span class="graph-node-type">SERVICE</span>
+                 <strong>${escapeHtml(service.service)}</strong>
+             </div>
+
+             <span class="hop-badge">
+                 ${service.hops} hop${service.hops === 1 ? "" : "s"}
+             </span>
+         `;
+
+         connection.appendChild(line);
+         connection.appendChild(serviceNode);
+
+         connections.appendChild(connection);
+     });
+
+     graph.appendChild(connections);
+
+     container.appendChild(graph);
+ }
+
+
+// ---------------------------------------------------------
+// OWNERS
+// ---------------------------------------------------------
+
+function renderOwners(owners) {
+
+    const container =
+        document.getElementById("owners");
+
+    container.innerHTML = "";
+
+    if (owners.length === 0) {
+
+        container.innerHTML =
+            `<div class="empty">No owners found.</div>`;
+
+        return;
+    }
+
+    owners.forEach(owner => {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "data-row";
+
+        row.innerHTML = `
+            <span>${escapeHtml(owner.service)}</span>
+            <span class="badge">
+                ${escapeHtml(owner.owner)}
+            </span>
+        `;
+
+        container.appendChild(row);
+    });
+}
+
+
+// ---------------------------------------------------------
+// REGIONS
+// ---------------------------------------------------------
+
+function renderRegions(regions) {
+
+    const container =
+        document.getElementById("regions");
+
+    container.innerHTML = "";
+
+    if (regions.length === 0) {
+
+        container.innerHTML =
+            `<div class="empty">No deployment information.</div>`;
+
+        return;
+    }
+
+    regions.forEach(region => {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "data-row";
+
+        row.innerHTML = `
+            <span>${escapeHtml(region.service)}</span>
+            <span class="badge">
+                ${escapeHtml(region.environment)}
+                ·
+                ${escapeHtml(region.region)}
+            </span>
+        `;
+
+        container.appendChild(row);
+    });
+}
+
+
+// ---------------------------------------------------------
+// ALTERNATIVES
+// ---------------------------------------------------------
+
+function renderAlternatives(alternatives) {
+
+    const container =
+        document.getElementById("alternatives");
+
+    container.innerHTML = "";
+
+    if (alternatives.length === 0) {
+
+        container.innerHTML =
+            `<div class="empty">No alternative paths found.</div>`;
+
+        return;
+    }
+
+    alternatives.forEach(alternative => {
+
+        const row =
+            document.createElement("div");
+
+        row.className = "data-row";
+
+        row.innerHTML = `
+            <span>
+                ${escapeHtml(alternative.fromDependency)}
+                →
+                ${escapeHtml(alternative.toDependency)}
+            </span>
+
+            <span class="badge">
+                ${escapeHtml(alternative.relationship)}
+            </span>
+        `;
+
+        container.appendChild(row);
+    });
+}
+
+
+// ---------------------------------------------------------
+// REFRESH
+// ---------------------------------------------------------
+
+document
+    .getElementById("refreshButton")
+    .addEventListener("click", async () => {
+
+        if (!selectedDependencyId) {
+            return;
+        }
+
+        const name =
+            document.getElementById("targetName").textContent;
+
+        await loadDependency(
+            selectedDependencyId,
+            name
+        );
+    });
+
+
+// ---------------------------------------------------------
+// UI HELPERS
+// ---------------------------------------------------------
+
+function showLoading() {
+
+    document
+        .getElementById("loading")
+        .classList.remove("hidden");
+}
+
+function hideLoading() {
+
+    document
+        .getElementById("loading")
+        .classList.add("hidden");
+}
+
+function showError(message) {
+
+    const element =
+        document.getElementById("error");
+
+    element.textContent = message;
+
+    element.classList.remove("hidden");
+}
+
+function clearError() {
+
+    document
+        .getElementById("error")
+        .classList.add("hidden");
+}
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}

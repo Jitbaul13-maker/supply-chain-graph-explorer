@@ -1,0 +1,483 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    color: #172033;
+}
+
+.topbar {
+    background: #111827;
+    color: white;
+    padding: 22px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.topbar p {
+    margin: 5px 0 0;
+    color: #9ca3af;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    background: #22c55e;
+    border-radius: 50%;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 35px auto;
+    padding: 0 24px;
+}
+
+.search-section {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+}
+
+.search-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.search-box {
+    display: flex;
+    gap: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 13px 15px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+.secondary-button {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.search-results {
+    margin-top: 12px;
+}
+
+.search-result {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+}
+
+.search-result:hover {
+    background: #f3f4f6;
+}
+
+.result-type {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.hidden {
+    display: none;
+}
+
+.target-header {
+    margin-top: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.label {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.target-header h2 {
+    margin: 5px 0 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.summary-card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.summary-card span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.summary-card strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 28px;
+}
+
+.panel {
+    background: white;
+    padding: 22px;
+    margin-bottom: 18px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.panel-header h3 {
+    margin: 0;
+}
+
+.panel-header span {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.two-column {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+/* =========================================================
+   GRAPH VISUALIZATION
+   ========================================================= */
+
+.blast-radius {
+    width: 100%;
+    overflow-x: auto;
+    padding: 25px 10px;
+}
+
+.graph-container {
+    min-width: 650px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+/* Central dependency */
+
+.graph-target-node {
+    min-width: 240px;
+    padding: 18px 25px;
+
+    background: #111827;
+    color: white;
+
+    border-radius: 12px;
+
+    text-align: center;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+
+    position: relative;
+    z-index: 2;
+}
+
+.graph-target-node strong {
+    display: block;
+    margin-top: 6px;
+    font-size: 17px;
+}
+
+
+/* Small node type label */
+
+.graph-node-type {
+    display: block;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 0.08em;
+
+    opacity: 0.7;
+}
+
+
+/* Connections */
+
+.graph-connections {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+
+    width: 100%;
+
+    margin-top: 35px;
+
+    position: relative;
+}
+
+
+/*
+ * Vertical trunk connecting dependency
+ * to the service level.
+ */
+
+.graph-connections::before {
+    content: "";
+
+    position: absolute;
+
+    top: -35px;
+    left: 50%;
+
+    width: 2px;
+    height: 35px;
+
+    background: #cbd5e1;
+}
+
+
+/* Individual service connection */
+
+.graph-connection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    min-width: 190px;
+}
+
+
+/* Line from dependency to service */
+
+.graph-line {
+    width: 2px;
+    height: 30px;
+
+    background: #cbd5e1;
+}
+
+
+/* Arrow */
+
+.graph-line::after {
+    content: "";
+
+    display: block;
+
+    width: 7px;
+    height: 7px;
+
+    border-right: 2px solid #94a3b8;
+    border-bottom: 2px solid #94a3b8;
+
+    transform: rotate(45deg);
+
+    position: relative;
+
+    top: 23px;
+    left: -3px;
+}
+
+
+/* Service node */
+
+.graph-service-node {
+    min-width: 190px;
+
+    padding: 15px;
+
+    background: #eff6ff;
+
+    border: 1px solid #93c5fd;
+
+    border-radius: 10px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+
+    text-align: center;
+
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.graph-service-node strong {
+    display: block;
+
+    margin-top: 5px;
+
+    font-size: 14px;
+
+    color: #172033;
+}
+
+
+/* Hop count */
+
+.hop-badge {
+    align-self: center;
+
+    padding: 4px 9px;
+
+    border-radius: 12px;
+
+    background: #dbeafe;
+
+    color: #1d4ed8;
+
+    font-size: 11px;
+
+    font-weight: 600;
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.data-row:last-child {
+    border-bottom: none;
+}
+
+.badge {
+    background: #eef2ff;
+    padding: 4px 9px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.empty {
+    color: #6b7280;
+    padding: 10px 0;
+}
+
+.loading {
+    text-align: center;
+    padding: 30px;
+}
+
+.error {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.search-results {
+    margin-top: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.search-result {
+    padding: 13px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+}
+
+.search-result:last-child {
+    border-bottom: none;
+}
+
+.search-result:hover {
+    background: #f8fafc;
+}
+
+.search-result-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.result-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.result-badge.service {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.result-badge.dependency {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+@media (max-width: 800px) {
+
+    .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .two-column {
+        grid-template-columns: 1fr;
+    }
+
+    .topbar {
+        padding: 20px;
+    }
+
+    .graph-connections {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
+
+    .graph-container {
+        min-width: 600px;
+    }
+}

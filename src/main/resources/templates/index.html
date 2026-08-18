@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>CognoDB Impact Explorer</title>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div>
+        <h1>CognoDB Impact Explorer</h1>
+        <p>Dependency impact analysis</p>
+    </div>
+
+    <div class="status">
+        <span class="status-dot"></span>
+        CognoDB Connected
+    </div>
+</header>
+
+
+<main class="container">
+
+    <!-- Search -->
+    <section class="search-section">
+
+        <label for="searchInput">Search services or dependencies</label>
+
+        <div class="search-box">
+            <input
+                    id="searchInput"
+                    type="text"
+                    placeholder="e.g. Payment Gateway"
+            />
+
+            <button id="searchButton">
+                Search
+            </button>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+
+    </section>
+
+
+    <!-- Selected target -->
+    <section id="targetSection" class="hidden">
+
+        <div class="target-header">
+
+            <div>
+                <span class="label">Selected dependency</span>
+                <h2 id="targetName">—</h2>
+            </div>
+
+            <button id="refreshButton" class="secondary-button">
+                Refresh
+            </button>
+
+        </div>
+
+
+        <!-- Summary cards -->
+        <div class="summary-grid">
+
+            <div class="summary-card">
+                <span>Affected Services</span>
+                <strong id="serviceCount">0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Owners</span>
+                <strong id="ownerCount">0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Regions</span>
+                <strong id="regionCount">0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>Alternatives</span>
+                <strong id="alternativeCount">0</strong>
+            </div>
+
+        </div>
+
+
+        <!-- Graph -->
+        <section class="panel">
+
+            <div class="panel-header">
+                <h3>Blast Radius</h3>
+                <span>Dependency → affected services</span>
+            </div>
+
+            <div id="blastRadius" class="blast-radius"></div>
+
+        </section>
+
+
+        <div class="two-column">
+
+            <!-- Owners -->
+            <section class="panel">
+
+                <div class="panel-header">
+                    <h3>Affected Owners</h3>
+                </div>
+
+                <div id="owners"></div>
+
+            </section>
+
+
+            <!-- Regions -->
+            <section class="panel">
+
+                <div class="panel-header">
+                    <h3>Deployment Impact</h3>
+                </div>
+
+                <div id="regions"></div>
+
+            </section>
+
+        </div>
+
+
+        <!-- Alternatives -->
+        <section class="panel">
+
+            <div class="panel-header">
+                <h3>Mitigation / Alternative Paths</h3>
+            </div>
+
+            <div id="alternatives"></div>
+
+        </section>
+
+    </section>
+
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+        Loading graph data...
+    </div>
+
+
+    <!-- Error -->
+    <div id="error" class="error hidden"></div>
+
+</main>
+
+
+<script src="/js/app.js"></script>
+
+</body>
+</html>
