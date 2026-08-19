@@ -420,10 +420,8 @@ The deployed Spring Boot application connects to the already-populated CognoDB i
 
 For reference, the project documentation contains an example SeedRunner implementation showing how the Cypher seed can be loaded from the application classpath and executed through the Neo4j Java Driver.
 
-See:
-```link
-docs/database-seeding.md
-```
+See the [Database Seeding Documentation](docs/database-seeding.md) for the implementation and initialization details.
+
 The documented runner is intended as a development/reference approach for initializing a fresh database rather than as part of the production application startup path.
 
 ### Recommended Initialization Flow
@@ -439,3 +437,73 @@ Spring Boot application
 REST API / UI
 ```
 Once the graph has been populated, the application treats CognoDB as its persistent data source and does not reseed the database during normal startup.
+
+## Local Development
+
+### Prerequisites
+
+- Java 21
+- Maven
+- Docker
+- Access to a CognoDB instance
+- Git
+
+### 1. Clone the repository
+
+```bash
+git clone [<repository-url>](https://github.com/Jitbaul13-maker/supply-chain-graph-explorer)
+cd supply-chain-graph-explorer
+```
+
+### 2. Configure environment variables
+
+Create a .env file for local development:
+
+COGNODB_URI=<your-cognodb-bolt-uri>
+COGNODB_USERNAME=<your-cognodb-username>
+COGNODB_PASSWORD=<your-cognodb-password>
+
+The .env file is intentionally excluded from version control.
+
+### 3. Populate CognoDB
+
+For a fresh database, execute the provided seed-large.cypher dataset against CognoDB.
+
+The documented SeedRunner example in Database Seeding Documentation demonstrates one way to execute the seed through the Neo4j Java Driver.
+
+### 4. Run the application
+
+The application can be started using Maven:
+
+```bash
+mvn spring-boot:run
+```
+If port 8080 is already occupied in the local environment, run the application on port 8081:
+```bash
+mvn spring-boot:run \
+  -Dspring-boot.run.arguments="--server.port=8081" \
+  -Dspring-boot.run.jvmArguments="-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true"
+```
+The application will then be available at:
+```text
+http://localhost:8081
+```
+### Running with Docker
+
+The project also includes a Docker configuration for running the application as a container.
+```bash
+docker compose up --build
+```
+The Docker configuration uses the platform-provided PORT when available, while retaining 8081 as the local fallback.
+
+Environment Variables
+
+The application reads the following variables from the environment:
+
+| Variable | Purpose|
+|----------|--------|
+| COGNODB_URI |	CognoDB Bolt connection URI|
+| COGNODB_USERNAME | CognoDB username|
+| COGNODB_PASSWORD | CognoDB password|
+
+Credentials should never be committed to the repository.
