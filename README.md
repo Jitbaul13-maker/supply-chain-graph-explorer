@@ -17,6 +17,19 @@ The live deployment is backed by CognoDB and uses the large seeded graph dataset
 - Inspect affected environments and regions
 - Discover alternative or mitigation paths
 
+## Tech Stack
+
+- **Java 21**
+- **Spring Boot**
+- **Spring MVC**
+- **Thymeleaf**
+- **Neo4j Java Driver**
+- **CognoDB**
+- **openCypher**
+- **Docker**
+- **Railway**
+- **HTML / CSS / JavaScript**
+
 ## Problem
 
 In a service-oriented system, a dependency failure rarely affects only the dependency itself.
@@ -617,3 +630,53 @@ src/
 | static |	Frontend JavaScript and CSS |
 | scripts |	Graph seed data |
 | docs |	Development and database-seeding documentation |
+
+## Engineering Decisions
+
+### Graph-first data model
+
+The application models the dependency landscape as a graph because the primary operations involve traversing relationships between services and dependencies.
+
+Rather than reconstructing these relationships through multiple relational joins, the application uses Cypher to express the required traversals directly.
+
+### Parameterized Cypher
+
+Graph queries use parameters for user-supplied values instead of constructing Cypher strings through concatenation.
+
+This keeps the query structure separate from input values and provides a safer and cleaner query interface.
+
+### Layered backend
+
+The application separates responsibilities across:
+
+```text
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+CognoDB
+```
+
+This keeps HTTP handling, application orchestration, and graph-specific queries independent.
+
+### Aggregated overview API
+
+The UI primarily uses a single overview endpoint for dependency-impact analysis.
+
+The backend combines the required graph operations into one response containing affected services, owners, regions, and alternatives.
+
+This avoids forcing the frontend to make several separate requests to render one impact-analysis view.
+
+### Production seeding is separated from application startup
+
+The large graph dataset is initialized separately from the normal application startup lifecycle.
+
+The documented SeedRunner demonstrates how the dataset can be loaded for development or fresh database initialization, while the deployed application connects to the existing populated CognoDB instance without reseeding it on every restart.
+
+### Environment-based configuration
+
+Database connection details are supplied through environment variables rather than being committed to source control.
+
+This keeps local development configuration and production secrets separate from the application code.
