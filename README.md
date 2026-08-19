@@ -75,3 +75,31 @@ The application can answer:
 5. Are there alternative or mitigation paths?
 
 These are graph traversal questions, which makes a graph-oriented data model a natural fit.
+
+## Why CognoDB?
+
+CognoDB is a graph database designed for relationship-centric applications and supports querying graph data using openCypher.
+
+It fits this project because the core operations are graph traversals rather than simple record lookups. The application needs to follow relationships between dependencies and services, traverse downstream services across multiple hops, and then retrieve related ownership, deployment, regional, and alternative-path information.
+
+The application communicates with CognoDB using the Neo4j Java Driver over the Bolt protocol. This allows the Spring Boot backend to execute parameterized Cypher queries directly against the graph.
+
+### Why not a relational database?
+
+A relational database could represent the same entities using tables and foreign keys. However, the primary operations in this application are relationship traversals:
+
+- Find services affected by a dependency.
+- Traverse downstream dependencies across multiple hops.
+- Identify owners of affected services.
+- Determine affected environments and regions.
+- Find alternative dependency paths.
+
+With a relational approach, these operations would require repeatedly joining relationship tables as traversal depth increases.
+
+With a graph database, the relationships are represented directly as edges in the graph, and Cypher can express the traversal more naturally.
+
+For example, the blast-radius query can start at a dependency and traverse downstream service relationships up to a defined depth:
+
+Dependency → Service → Service → Service
+
+The resulting services form the dependency's potential blast radius.
