@@ -4,7 +4,7 @@ A graph-powered dependency intelligence tool for exploring how a dependency fail
 
 ## 🚀 Live Demo
 
-**[Open the live application](https://supply-chain-graph-explorer-production.up.railway.app/)**
+**[Open the live application](https://drive.google.com/file/d/15TbVEYcVjCQZW-EyAIAvCNqyaqOcqmnG/view?usp=sharing)**
 
 The live deployment is backed by CognoDB and uses the large seeded graph dataset.
 
