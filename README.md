@@ -496,7 +496,7 @@ docker compose up --build
 ```
 The Docker configuration uses the platform-provided PORT when available, while retaining 8081 as the local fallback.
 
-Environment Variables
+### Environment Variables
 
 The application reads the following variables from the environment:
 
@@ -562,3 +562,58 @@ Continuous Deployment
 The repository is connected to Railway through the Railway GitHub App.
 
 Commits pushed to the configured main branch can therefore trigger a new deployment automatically.
+
+## Project Structure
+
+```text
+src/
+├── main/
+│   ├── java/com/baul/cognoDBdemo/
+│   │   ├── config/
+│   │   │   └── CognoDbConfig.java
+│   │   │
+│   │   ├── controller/
+│   │   │   ├── GraphController.java
+│   │   │   └── PageController.java
+│   │   │
+│   │   ├── repository/
+│   │   │   └── GraphRepository.java
+│   │   │
+│   │   ├── service/
+│   │   │   └── GraphService.java
+│   │   │
+│   │   └── CognoDBdemoApplication.java
+│   │
+│   └── resources/
+│       ├── scripts/
+│       │   └── seed-large.cypher
+│       │
+│       ├── static/
+│       │   ├── css/
+│       │   └── js/
+│       │
+│       ├── templates/
+│       │   └── index.html
+│       │
+│       └── application.properties
+│
+├── docs/
+│   └── database-seeding.md
+│
+├── Dockerfile
+├── docker-compose.yml
+└── pom.xml
+```
+
+### Package Responsibilities
+
+| Component | Responsibility |
+|-----------|----------------|
+| controller |	Handles HTTP requests and returns API/page responses |
+| service |	Coordinates application and graph operations |
+| repository |	Contains Cypher queries and communicates with CognoDB |
+| config |	Creates and configures the CognoDB/Neo4j driver |
+| templates |	Thymeleaf UI |
+| static |	Frontend JavaScript and CSS |
+| scripts |	Graph seed data |
+| docs |	Development and database-seeding documentation |
