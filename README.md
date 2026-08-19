@@ -255,12 +255,12 @@ The application models the supply-chain dependency landscape as a connected grap
                                                         └─────────────┘
 
 Legend:
-  (Service)-[:SERVICE_DEPENDS_ON]->(Service)       downstream service dependency
-  (Service)-[:OWNED_BY]->(Team)                    ownership
-  (Service)-[:DEPLOYED_IN]->(Environment)          deployment context
-  (Environment)-[:RUNS_ON]->(Region)               geographic placement
-  (Dependency)-[:ALTERNATIVE_TO]->(Dependency)     alternative / mitigation path
-  (Incident)-[:AFFECTS]->(Service)             
+  (Service)-[:SERVICE_DEPENDS_ON]->(Service)                   downstream service dependency
+  (Service)-[:OWNED_BY]->(Team)                                ownership
+  (Service)-[:DEPLOYED_IN]->(Environment)                      deployment context
+  (Environment)-[:RUNS_ON]->(Region)                           geographic placement
+  (Dependency)-[:ALTERNATIVE_TO|RELATED_TO]->(Dependency)      alternative / mitigation path
+  (Incident)-[:AFFECTS]->(Service)                             Immediate impact
 ```
 
 ### Nodes
@@ -603,20 +603,25 @@ The number of deployment entries does not represent the total blast radius. The 
 
 ### 6. Alternative Dependencies
 
-Dependencies can also be connected to alternative dependencies using:
+The graph can connect dependencies through relationships representing
+alternative or related paths.
+
+The application supports both `RELATED_TO` and `ALTERNATIVE_TO` relationships:
 ```text
+Dependency ──RELATED_TO──────> Dependency
 Dependency ──ALTERNATIVE_TO──> Dependency
 ```
 The application uses this relationship to identify potential alternative or mitigation paths.
 ```cypher
-MATCH (d:Dependency {id: $dependencyId})
-      -[:ALTERNATIVE_TO]->
-      (alt:Dependency)
-
+MATCH (d1:Dependency {id: $dependencyId})
+      -[r:RELATED_TO|ALTERNATIVE_TO]-
+      (d2:Dependency)
 
 RETURN DISTINCT
-       alt.name AS alternative
-ORDER BY alternative
+       d1.name AS fromDependency,
+       d2.name AS toDependency,
+       type(r) AS relationship
+ORDER BY toDependency
 ```
 
 How it works
