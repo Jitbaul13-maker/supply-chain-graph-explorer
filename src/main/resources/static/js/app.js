@@ -73,7 +73,23 @@ async function search() {
             );
 
         if (!response.ok) {
-            throw new Error("Search failed");
+
+            let message =
+                "Search failed";
+
+            try {
+
+                const error =
+                    await response.json();
+
+                message =
+                    error.message || message;
+
+            } catch (_) {
+                // Keep fallback message.
+            }
+
+            throw new Error(message);
         }
 
         const results =
@@ -84,6 +100,7 @@ async function search() {
     } catch (error) {
 
         showError(error.message);
+
     }
 }
 
