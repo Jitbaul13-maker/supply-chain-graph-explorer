@@ -357,3 +357,47 @@ CognoDB
 ```
 
 The graph-specific logic remains in Cypher queries rather than being embedded in the HTTP layer.
+
+## UI Flow
+
+The application is designed around a simple dependency-impact investigation workflow.
+
+### 1. Search
+
+The user begins by searching for a service or dependency.
+
+```text
+User
+ ↓
+Search bar
+ ↓
+GET /api/graph/search
+ ↓
+Services / Dependencies
+```
+The search results allow the user to identify the dependency or service they want to investigate.
+
+### 2. Select a Dependency
+
+After selecting a dependency, the application retrieves the dependency information associated with the selected item.
+
+The user can then initiate an impact analysis.
+
+### 3. Impact Analysis
+
+The application requests the aggregated overview:
+```
+GET /api/graph/overview/{dependencyId}
+```
+The backend performs the required graph traversals against CognoDB and returns the complete analysis.
+
+### 4. Explore the Impact
+
+The UI presents the results in separate sections:
+
+Affected Services — services within the calculated blast radius and their hop distance.
+Owners — teams responsible for affected services.
+Regions & Environments — deployment locations and environments affected.
+Alternatives — related or alternative dependency paths.
+
+This allows a user to move from a single dependency to an operational view of its potential impact without manually querying the graph.
