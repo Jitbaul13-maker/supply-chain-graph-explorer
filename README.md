@@ -56,6 +56,14 @@ Behavior when CognoDB is unreachable.
 
 ![Error state](docs/screenshots/07-error-state.png)
 
+## 🎥 Demo
+
+A short walkthrough of the application demonstrating dependency search,
+blast-radius analysis, responsible owners, deployment impact,
+incident context, alternative paths, and the overall impact-analysis workflow.
+
+**[▶️ Watch the demo](https://drive.google.com/file/d/1JDE0MRysDYmfWAH0EBq5SJNq1FrUbR7O/view?usp=drive_link)**
+
 ## Tech Stack
 
 - **Java 21**
