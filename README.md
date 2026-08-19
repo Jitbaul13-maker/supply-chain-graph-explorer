@@ -212,20 +212,23 @@ The application models the supply-chain dependency landscape as a connected grap
 
 ```text
 
-                             ┌─────────────┐
-                             │    Team     │
-                             └──────┬──────┘
+                             ┌───────────────┐
+                             │    Team       |
+                             |   id: string  |
+                             |      name     |
+                             │               |
+                             └──────┬────────┘
                                     │ OWNED_BY
                                     │ (reverse: Service → Team)
                                     │
 ┌─────────────┐                     ▼
-│ Dependency  │  DEPENDS_ON  ┌─────────────┐
-|             | ───────────► |             |
-│             │              │   Service   │
-│ id: string  │◄───────────  │             │
-│ name        │ RELATED_TO   │  id: string │
-│ type        │ (alt path)   │      name   │
-└─────────────┘              └──────┬──────┘
+│ Dependency  │  DEPENDS_ON  ┌─────────────┐            ┌───────────────────┐
+|             | ◄─────────── |             |            |                   |         
+│             │              │   Service   │            |   Incident        |
+│ id: string  │◄───────────  │             │◄───────────|                   |
+│ name        │ RELATED_TO   │  id: string │  AFFECTS   |   id: string      |
+│ type        │ (alt path)   │      name   │            |    severity       |
+└─────────────┘              └──────┬──────┘            └───────────────────┘
                                     │
                          DEPLOYED_IN│
                                     ▼
@@ -243,12 +246,12 @@ The application models the supply-chain dependency landscape as a connected grap
                             └─────────────┘
 
 Legend:
-  (Dependency)-[:DEPENDS_ON]->(Service)        service consumes a dependency
-  (Service)-[:SERVICE_DEPENDS_ON]->(Service)           downstream service dependency
+  (Service)-[:SERVICE_DEPENDS_ON]->(Service)   downstream service dependency
   (Service)-[:OWNED_BY]->(Team)                ownership
   (Service)-[:DEPLOYED_IN]->(Environment)      deployment context
   (Environment)-[:RUNS_ON]->(Region)           geographic placement
   (Dependency)-[:RELATED_TO]->(Dependency)     alternative / mitigation path
+  (Incident)-[:AFFECTS]->(Service)             
 ```
 
 ### Nodes
@@ -304,12 +307,36 @@ The application then enriches this impact set with ownership, deployment-region,
 
 ## Core Cypher Queries
 
-The application uses parameterized Cypher queries to perform the main graph operations.
+The application uses parameterized Cypher queries to perform the main graph operations behind search, dependency impact analysis, ownership, deployment impact, alternatives, and incident context.
 
-### 1. Search
+These queries operate directly on the graph relationships defined by the application data model.
 
-Searches both `Service` and `Dependency` nodes by name.
+### Understanding Labels and Variables
 
+Cypher uses variables such as `n`, `d`, `s`, `t`, `e`, and `r` to refer to nodes in a query.
+
+For example:
+
+```cypher
+(d:Dependency)
+```
+
+means:
+
+- d is the variable used to refer to the node
+- Dependency is the node label
+
+```cypher
+Similarly:
+(s:Service)
+```
+means that s refers to a node labelled Service.
+
+The variable names themselves are arbitrary. The labels are what tell CognoDB which type of node is being matched.
+
+1. Search Services and Dependencies
+
+The search query allows the UI to search both Service and Dependency nodes using a single endpoint.
 ```cypher
 MATCH (n)
 WHERE (n:Service OR n:Dependency)
@@ -324,89 +351,25 @@ ORDER BY n.name
 LIMIT 20
 ```
 
-The query allows the UI to search across both services and dependencies using a single endpoint.
+How it works:
 
-### 2. Dependency Traversal / Blast Radius
+    MATCH (n) considers nodes in the graph.
 
-Starting from a dependency, the application traverses downstream service relationships up to three hops.
+    The WHERE clause restricts the results to nodes labelled either Service or Dependency:
 
-The traversal identifies the services that can potentially be affected by the dependency.
-
-```text
-Dependency
-    ↓
-Service
-    ↓
-Service
-    ↓
-Service
-```
-The result includes the affected service and its calculated hop distance.
-
-### Why this query is awkward in a relational database
-
-The blast-radius query has no fixed depth — a dependency might affect
-one service or five, three hops deep or one, depending on how the
-graph happens to be shaped. In Cypher this is a single variable-length
-pattern:
-
-​```cypher
-MATCH (d:Dependency {id: $dependencyId})-[:SERVICE_DEPENDS_ON*1..3]->(s:Service)
-RETURN DISTINCT s, length(path) AS hops
-​```
-
-In a relational schema, the same question requires either:
-
-- A fixed number of self-joins on a `service_dependencies` table, one join per hop — which only works if you decide the max depth in advance and hard-code that many joins, or
-- A recursive CTE, which most relational engines support but which scales poorly and reads far less naturally than a bounded graph traversal.
-
-Because the depth of impact is exactly the thing you don't know in
-advance when an incident starts, expressing "how far does this
-propagate" as a first-class, depth-flexible query — rather than a
-fixed join chain — is the core advantage a graph database provides
-here.
-
-### 3. Responsible Owners
-
-Once the affected services are identified, the graph is traversed through ownership relationships to determine the responsible teams.
-```text
-Affected Service ──OWNED_BY──> Team
+```cypher
+n:Service OR n:Dependency
 ```
 
-### 4. Affected Regions
+The query then performs a case-insensitive partial match against the node's name:
 
-The application follows deployment relationships to determine where affected services are running.
-
-```text
-Service
-   ↓
-Environment
-   ↓
-Region
+```cypher
+toLower(n.name) CONTAINS toLower($query)
 ```
 
-This allows the application to distinguish impacts such as Production vs. Sandbox and regional deployment differences.
+The CASE expression determines whether the returned node is a service or dependency so that the frontend can display the appropriate result type.
 
-### 5. Alternative Dependencies
-
-The graph also models relationships between dependencies that can represent alternative or related paths.
-
-```text
-Dependency 001 ──RELATED_TO──> Dependency 002
-```
-
-The application exposes these relationships as potential alternatives or mitigation paths.
-
-### 6. Aggregated Overview
-
-The overview operation combines the graph analysis into a single response containing:
-
-- Affected services and hop distance
-- Responsible teams
-- Affected environments and regions
-- Alternative dependencies
-
-This allows the frontend to retrieve the complete impact analysis with a single API request.
+The query is limited to 20 results to keep the search response small and responsive.
 
 ## REST API
 
@@ -498,6 +461,7 @@ The backend performs the required graph traversals against CognoDB and returns t
 The UI presents the results in separate sections:
 
 - **Affected Services** — services within the calculated blast radius and their hop distance.
+- **incidents** - Immediate operational incidents associated with directly affected services
 - **Owners** — teams responsible for affected services.
 - **Regions & Environments** — deployment locations and environments affected.
 - **Alternatives** — related or alternative dependency paths.
