@@ -17,6 +17,44 @@ The live deployment is backed by CognoDB and uses the large seeded graph dataset
 - Inspect affected environments and regions
 - Discover alternative or mitigation paths
 
+## Screenshots
+
+### 1. Dashboard — Search
+The entry point. A user searches for a service or dependency by name.
+
+![Dashboard search](docs/screenshots/01-dashboard-search.png)
+
+### 2. Search Results
+Services and dependencies matching the query, ready for selection.
+
+![Search results](docs/screenshots/02-search-results.png)
+
+### 3. Impact Overview — Blast Radius
+The core screen. Affected services grouped by hop distance from the
+selected dependency.
+
+![Blast radius view](docs/screenshots/03-blast-radius.png)
+
+### 4. Owners, Environments & Regions
+Responsible teams and deployment footprint for the affected services.
+
+![Owners and regions](docs/screenshots/04-owners-regions.png)
+
+### 5. Alternative / Mitigation Paths
+Related dependencies that could serve as fallback options.
+
+![Alternatives](docs/screenshots/05-alternatives.png)
+
+### 6. Empty State
+Result when a dependency has no downstream impact.
+
+![Empty state](docs/screenshots/06-empty-state.png)
+
+### 7. Error State
+Behavior when CognoDB is unreachable.
+
+![Error state](docs/screenshots/07-error-state.png)
+
 ## Tech Stack
 
 - **Java 21**
@@ -174,33 +212,34 @@ The application models the supply-chain dependency landscape as a connected grap
 
 ```text
 
-                         ┌─────────────┐
-                         │    Team       │
-                         └──────┬──────┘
-                                  │ OWNED_BY
-                                  │ (reverse: Service → Team)
-                                  │
-┌─────────────┐  DEPENDS_ON    ▼
-│ Dependency    │───────────►┌─────────────┐
-│               │              │   Service      │
-│ id: string    │◄───────────│                │
-│ name          │ RELATED_TO   │  id: string    │
-│ tier          │ (alt path)   │      name      │
-└─────────────┘              └──────┬──────┘
-                                        │
-                             DEPLOYED_IN│
-                                        ▼
                              ┌─────────────┐
-                             │  Environment  │
-                             │   name        │
-                             │   (Prod/      │
-                             │   Sandbox)    │
+                             │    Team     │
                              └──────┬──────┘
-                                     │ RUNS_ON
-                                     ▼
+                                    │ OWNED_BY
+                         DEPENDS_ON │ (reverse: Service → Team)
+                                    │
+┌─────────────┐                     ▼
+│ Dependency  │              ┌─────────────┐
+|             | ───────────► |             |
+│             │              │   Service   │
+│ id: string  │◄───────────  │             │
+│ name        │ RELATED_TO   │  id: string │
+│ tier        │ (alt path)   │      name   │
+└─────────────┘              └──────┬──────┘
+                                    │
+                         DEPLOYED_IN│
+                                    ▼
+                             ┌─────────────┐
+                             │  Environment│
+                             │   name      │
+                             │   (Prod/    │
+                             │   Sandbox)  │
+                             └──────┬──────┘
+                                    │ RUNS_ON
+                                    ▼
                             ┌─────────────┐
-                            │     Region    │
-                            │      name     │
+                            │   Region    │
+                            │    name     │
                             └─────────────┘
 
 Legend:
