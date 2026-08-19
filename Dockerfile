@@ -21,4 +21,4 @@ COPY --from=build /app/target/cognoDBdemo-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8081
 
-ENTRYPOINT ["java", "-Djava.net.preferIPv4Stack=true", "-Djava.net.preferIPv4Addresses=true", "-jar", "app.jar", "--server.port=8081"]
+ENTRYPOINT ["sh", "-c", "java -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses=true -jar app.jar --server.port=${PORT:-8081}"]
