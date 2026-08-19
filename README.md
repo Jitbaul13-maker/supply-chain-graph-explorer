@@ -1092,7 +1092,7 @@ This keeps HTTP handling, application orchestration, and graph-specific queries 
 
 The UI primarily uses a single overview endpoint for dependency-impact analysis.
 
-The backend combines the required graph operations into one response containing affected services, owners, regions, and alternatives.
+The backend combines the required graph operations into one response containing affected services, owners, deployment information, alternatives, and incident context.
 
 This avoids forcing the frontend to make several separate requests to render one impact-analysis view.
 
