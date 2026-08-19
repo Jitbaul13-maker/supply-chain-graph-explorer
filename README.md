@@ -224,7 +224,7 @@ The application models the supply-chain dependency landscape as a connected grap
 │             │              │   Service   │
 │ id: string  │◄───────────  │             │
 │ name        │ RELATED_TO   │  id: string │
-│ tier        │ (alt path)   │      name   │
+│ type        │ (alt path)   │      name   │
 └─────────────┘              └──────┬──────┘
                                     │
                          DEPLOYED_IN│
