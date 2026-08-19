@@ -305,3 +305,55 @@ affected environments and regions
 alternative dependencies
 
 This allows the frontend to retrieve the complete impact analysis with a single API request.
+
+## REST API
+
+The backend exposes a small REST API under `/api/graph`.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/api/graph/search?q={query}` | Search for services and dependencies |
+| `GET` | `/api/graph/dependencies/{serviceId}` | Retrieve dependencies associated with a service |
+| `GET` | `/api/graph/blast-radius/{dependencyId}` | Calculate the downstream impact of a dependency |
+| `GET` | `/api/graph/owners/{dependencyId}` | Find teams associated with affected services |
+| `GET` | `/api/graph/regions/{dependencyId}` | Find affected environments and regions |
+| `GET` | `/api/graph/alternatives/{dependencyId}` | Find alternative or related dependencies |
+| `GET` | `/api/graph/overview/{dependencyId}` | Return the complete dependency impact analysis |
+
+### Aggregated Overview
+
+The primary UI workflow uses the overview endpoint:
+
+```text
+GET /api/graph/overview/{dependencyId}
+```
+
+The response combines the results of the graph analysis into a single JSON document:
+
+```json
+{
+  "target": "dependency:dep-001",
+  "affectedServices": [],
+  "owners": [],
+  "regions": [],
+  "alternatives": []
+}
+```
+
+This allows the frontend to render the complete impact analysis without making separate HTTP requests for each section.
+
+### API Design
+
+The controllers are intentionally thin. HTTP request handling is separated from the graph traversal and application logic:
+
+```text
+GraphController
+      ↓
+GraphService
+      ↓
+GraphRepository
+      ↓
+CognoDB
+```
+
+The graph-specific logic remains in Cypher queries rather than being embedded in the HTTP layer.
