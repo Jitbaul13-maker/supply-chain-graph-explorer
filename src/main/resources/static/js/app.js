@@ -1,10 +1,16 @@
 const API = "/api/graph";
 
 let selectedDependencyId = null;
-
 let searchTimer = null;
+let overviewRequestId = 0;
 
-const searchInput = document.getElementById("searchInput");
+const searchInput =
+    document.getElementById("searchInput");
+
+
+// ---------------------------------------------------------
+// LIVE SEARCH
+// ---------------------------------------------------------
 
 searchInput.addEventListener("input", function () {
 
@@ -13,7 +19,11 @@ searchInput.addEventListener("input", function () {
     const query = this.value.trim();
 
     if (!query) {
-        document.getElementById("searchResults").innerHTML = "";
+
+        document
+            .getElementById("searchResults")
+            .innerHTML = "";
+
         return;
     }
 
@@ -21,6 +31,8 @@ searchInput.addEventListener("input", function () {
         search();
     }, 250);
 });
+
+
 // ---------------------------------------------------------
 // SEARCH
 // ---------------------------------------------------------
@@ -42,7 +54,10 @@ document
 async function search() {
 
     const query =
-        document.getElementById("searchInput").value.trim();
+        document
+            .getElementById("searchInput")
+            .value
+            .trim();
 
     if (!query) {
         return;
@@ -53,13 +68,16 @@ async function search() {
     try {
 
         const response =
-            await fetch(`${API}/search?q=${encodeURIComponent(query)}`);
+            await fetch(
+                `${API}/search?q=${encodeURIComponent(query)}`
+            );
 
         if (!response.ok) {
             throw new Error("Search failed");
         }
 
-        const results = await response.json();
+        const results =
+            await response.json();
 
         renderSearchResults(results);
 
@@ -84,7 +102,9 @@ function renderSearchResults(results) {
     if (results.length === 0) {
 
         container.innerHTML =
-            `<div class="empty">No matching services or dependencies.</div>`;
+            `<div class="empty">
+                No matching services or dependencies.
+            </div>`;
 
         return;
     }
@@ -98,27 +118,39 @@ function renderSearchResults(results) {
 
         element.innerHTML = `
             <div class="search-result-main">
-                <strong>${escapeHtml(node.name)}</strong>
+
+                <strong>
+                    ${escapeHtml(node.name)}
+                </strong>
+
                 <span class="result-badge ${node.type.toLowerCase()}">
                     ${escapeHtml(node.type)}
                 </span>
+
             </div>
         `;
 
         element.addEventListener("click", () => {
 
-            document.getElementById("searchInput").value =
-                node.name;
+            document
+                .getElementById("searchInput")
+                .value = node.name;
 
             container.innerHTML = "";
 
             if (node.type === "Dependency") {
 
-                loadDependency(node.id, node.name);
+                loadDependency(
+                    node.id,
+                    node.name
+                );
 
             } else {
 
-                loadServiceDependencies(node.id, node.name);
+                loadServiceDependencies(
+                    node.id,
+                    node.name
+                );
             }
         });
 
@@ -143,25 +175,188 @@ async function loadDependency(id, name) {
         .getElementById("targetName")
         .textContent = name;
 
+
+    /*
+     * Immediately remove the previous result.
+     *
+     * This prevents the old dependency's data from
+     * appearing to belong to the newly selected target.
+     */
+
+    clearAnalysis();
+
+    clearError();
+
+    showLoading();
+
+
+    /*
+     * Every overview request receives a unique id.
+     *
+     * If the user selects another dependency before
+     * this request finishes, the older response is ignored.
+     */
+
+    const requestId = ++overviewRequestId;
+
+
+    const refreshButton =
+        document.getElementById("refreshButton");
+
+    refreshButton.disabled = true;
+
+
+    try {
+
+        const response =
+            await fetch(
+                `${API}/overview/${encodeURIComponent(id)}`
+            );
+
+
+        if (!response.ok) {
+
+            let message =
+                "Unable to load graph";
+
+            try {
+
+                const error =
+                    await response.json();
+
+                message =
+                    error.message || message;
+
+            } catch (_) {
+                // Keep fallback message.
+            }
+
+            throw new Error(message);
+        }
+
+
+        const data =
+            await response.json();
+
+
+        /*
+         * Ignore stale responses.
+         */
+
+        if (requestId !== overviewRequestId) {
+            return;
+        }
+
+
+        renderOverview(data);
+
+
+    } catch (error) {
+
+        if (requestId === overviewRequestId) {
+
+            showError(
+                error.message
+            );
+        }
+
+
+    } finally {
+
+        if (requestId === overviewRequestId) {
+
+            hideLoading();
+
+            refreshButton.disabled = false;
+        }
+    }
+}
+
+
+// ---------------------------------------------------------
+// SERVICE SELECTION
+// ---------------------------------------------------------
+
+async function loadServiceDependencies(id, name) {
+
+    clearError();
+
     showLoading();
 
     try {
 
         const response =
-            await fetch(`${API}/overview/${encodeURIComponent(id)}`);
+            await fetch(
+                `${API}/dependencies/${encodeURIComponent(id)}`
+            );
 
         if (!response.ok) {
 
-            const error = await response.json();
-
             throw new Error(
-                error.message || "Unable to load graph"
+                "Unable to load service dependencies"
             );
         }
 
-        const data = await response.json();
+        const dependencies =
+            await response.json();
 
-        renderOverview(data);
+
+        const container =
+            document.getElementById("searchResults");
+
+        container.innerHTML = `
+            <div class="result-type">
+                Dependencies of
+                ${escapeHtml(name)}
+            </div>
+        `;
+
+
+        if (dependencies.length === 0) {
+
+            container.innerHTML +=
+                `<div class="empty">
+                    No dependencies found.
+                </div>`;
+
+            return;
+        }
+
+
+        dependencies.forEach(dependency => {
+
+            const element =
+                document.createElement("div");
+
+            element.className =
+                "search-result";
+
+            element.innerHTML = `
+                <strong>
+                    ${escapeHtml(dependency.name)}
+                </strong>
+
+                <div class="result-type">
+                    Dependency
+                </div>
+            `;
+
+
+            element.addEventListener(
+                "click",
+                () => {
+
+                    loadDependency(
+                        dependency.id,
+                        dependency.name
+                    );
+                }
+            );
+
+
+            container.appendChild(element);
+        });
+
 
     } catch (error) {
 
@@ -175,89 +370,50 @@ async function loadDependency(id, name) {
 
 
 // ---------------------------------------------------------
-// SERVICE SELECTION
-// ---------------------------------------------------------
-
-async function loadServiceDependencies(id, name) {
-
-    try {
-
-        const response =
-            await fetch(
-                `${API}/dependencies/${encodeURIComponent(id)}`
-            );
-
-        if (!response.ok) {
-            throw new Error("Unable to load service dependencies");
-        }
-
-        const dependencies = await response.json();
-
-        const container =
-            document.getElementById("searchResults");
-
-        container.innerHTML = `
-            <div class="result-type">
-                Dependencies of ${escapeHtml(name)}
-            </div>
-        `;
-
-        dependencies.forEach(dependency => {
-
-            const element =
-                document.createElement("div");
-
-            element.className = "search-result";
-
-            element.innerHTML = `
-                <strong>${escapeHtml(dependency.name)}</strong>
-                <div class="result-type">Dependency</div>
-            `;
-
-            element.addEventListener("click", () => {
-
-                loadDependency(
-                    dependency.id,
-                    dependency.name
-                );
-
-            });
-
-            container.appendChild(element);
-        });
-
-    } catch (error) {
-
-        showError(error.message);
-    }
-}
-
-
-// ---------------------------------------------------------
 // OVERVIEW RENDERING
 // ---------------------------------------------------------
 
 function renderOverview(data) {
 
-    document.getElementById("serviceCount")
-        .textContent = data.affectedServices.length;
+    document
+        .getElementById("serviceCount")
+        .textContent =
+        data.affectedServices.length;
 
-    document.getElementById("ownerCount")
-        .textContent = data.owners.length;
 
-    document.getElementById("regionCount")
-        .textContent = data.regions.length;
+    document
+        .getElementById("ownerCount")
+        .textContent =
+        data.owners.length;
 
-    document.getElementById("alternativeCount")
-        .textContent = data.alternatives.length;
 
-    renderBlastRadius(data.affectedServices);
+    document
+        .getElementById("regionCount")
+        .textContent =
+        data.regions.length;
 
-    renderOwners(data.owners);
 
-    renderRegions(data.regions);
+    document
+        .getElementById("alternativeCount")
+        .textContent =
+        data.alternatives.length;
 
-    renderAlternatives(data.alternatives);
+
+    renderBlastRadius(
+        data.affectedServices
+    );
+
+    renderOwners(
+        data.owners
+    );
+
+    renderRegions(
+        data.regions
+    );
+
+    renderAlternatives(
+        data.alternatives
+    );
 }
 
 
@@ -267,79 +423,127 @@ function renderOverview(data) {
 
 function renderBlastRadius(services) {
 
-     const container =
-         document.getElementById("blastRadius");
+    const container =
+        document.getElementById("blastRadius");
 
-     container.innerHTML = "";
-
-     if (services.length === 0) {
-
-         container.innerHTML =
-             `<div class="empty">No affected services.</div>`;
-
-         return;
-     }
-
-     const targetName =
-         document.getElementById("targetName").textContent;
-
-     const graph = document.createElement("div");
-     graph.className = "graph-container";
-
-     // Central dependency node
-     const targetNode = document.createElement("div");
-     targetNode.className = "graph-target-node";
-
-     targetNode.innerHTML = `
-         <span class="graph-node-type">DEPENDENCY</span>
-         <strong>${escapeHtml(targetName)}</strong>
-     `;
-
-     graph.appendChild(targetNode);
+    container.innerHTML = "";
 
 
-     // Connection area
-     const connections = document.createElement("div");
-     connections.className = "graph-connections";
+    if (services.length === 0) {
 
-     services.forEach(service => {
+        container.innerHTML =
+            `<div class="empty">
+                No affected services.
+            </div>`;
 
-         const connection =
-             document.createElement("div");
+        return;
+    }
 
-         connection.className = "graph-connection";
 
-         const line =
-             document.createElement("div");
+    const targetName =
+        document
+            .getElementById("targetName")
+            .textContent;
 
-         line.className = "graph-line";
 
-         const serviceNode =
-             document.createElement("div");
+    const graph =
+        document.createElement("div");
 
-         serviceNode.className = "graph-service-node";
+    graph.className =
+        "graph-container";
 
-         serviceNode.innerHTML = `
-             <div>
-                 <span class="graph-node-type">SERVICE</span>
-                 <strong>${escapeHtml(service.service)}</strong>
-             </div>
 
-             <span class="hop-badge">
-                 ${service.hops} hop${service.hops === 1 ? "" : "s"}
-             </span>
-         `;
+    const targetNode =
+        document.createElement("div");
 
-         connection.appendChild(line);
-         connection.appendChild(serviceNode);
+    targetNode.className =
+        "graph-target-node";
 
-         connections.appendChild(connection);
-     });
 
-     graph.appendChild(connections);
+    targetNode.innerHTML = `
+        <span class="graph-node-type">
+            DEPENDENCY
+        </span>
 
-     container.appendChild(graph);
- }
+        <strong>
+            ${escapeHtml(targetName)}
+        </strong>
+    `;
+
+
+    graph.appendChild(targetNode);
+
+
+    const connections =
+        document.createElement("div");
+
+    connections.className =
+        "graph-connections";
+
+
+    services.forEach(service => {
+
+        const connection =
+            document.createElement("div");
+
+        connection.className =
+            "graph-connection";
+
+
+        const line =
+            document.createElement("div");
+
+        line.className =
+            "graph-line";
+
+
+        const serviceNode =
+            document.createElement("div");
+
+        serviceNode.className =
+            "graph-service-node";
+
+
+        serviceNode.innerHTML = `
+            <div>
+
+                <span class="graph-node-type">
+                    SERVICE
+                </span>
+
+                <strong>
+                    ${escapeHtml(service.service)}
+                </strong>
+
+            </div>
+
+            <span class="hop-badge">
+                ${service.hops}
+                hop${service.hops === 1 ? "" : "s"}
+            </span>
+        `;
+
+
+        connection.appendChild(line);
+
+        connection.appendChild(
+            serviceNode
+        );
+
+        connections.appendChild(
+            connection
+        );
+    });
+
+
+    graph.appendChild(
+        connections
+    );
+
+    container.appendChild(
+        graph
+    );
+}
 
 
 // ---------------------------------------------------------
@@ -353,27 +557,37 @@ function renderOwners(owners) {
 
     container.innerHTML = "";
 
+
     if (owners.length === 0) {
 
         container.innerHTML =
-            `<div class="empty">No owners found.</div>`;
+            `<div class="empty">
+                No owners found.
+            </div>`;
 
         return;
     }
+
 
     owners.forEach(owner => {
 
         const row =
             document.createElement("div");
 
-        row.className = "data-row";
+        row.className =
+            "data-row";
+
 
         row.innerHTML = `
-            <span>${escapeHtml(owner.service)}</span>
+            <span>
+                ${escapeHtml(owner.service)}
+            </span>
+
             <span class="badge">
                 ${escapeHtml(owner.owner)}
             </span>
         `;
+
 
         container.appendChild(row);
     });
@@ -391,29 +605,39 @@ function renderRegions(regions) {
 
     container.innerHTML = "";
 
+
     if (regions.length === 0) {
 
         container.innerHTML =
-            `<div class="empty">No deployment information.</div>`;
+            `<div class="empty">
+                No deployment information.
+            </div>`;
 
         return;
     }
+
 
     regions.forEach(region => {
 
         const row =
             document.createElement("div");
 
-        row.className = "data-row";
+        row.className =
+            "data-row";
+
 
         row.innerHTML = `
-            <span>${escapeHtml(region.service)}</span>
+            <span>
+                ${escapeHtml(region.service)}
+            </span>
+
             <span class="badge">
                 ${escapeHtml(region.environment)}
                 ·
                 ${escapeHtml(region.region)}
             </span>
         `;
+
 
         container.appendChild(row);
     });
@@ -431,32 +655,47 @@ function renderAlternatives(alternatives) {
 
     container.innerHTML = "";
 
+
     if (alternatives.length === 0) {
 
         container.innerHTML =
-            `<div class="empty">No alternative paths found.</div>`;
+            `<div class="empty">
+                No alternative paths found.
+            </div>`;
 
         return;
     }
+
 
     alternatives.forEach(alternative => {
 
         const row =
             document.createElement("div");
 
-        row.className = "data-row";
+        row.className =
+            "data-row";
+
 
         row.innerHTML = `
             <span>
-                ${escapeHtml(alternative.fromDependency)}
+                ${escapeHtml(
+                    alternative.fromDependency
+                )}
+
                 →
-                ${escapeHtml(alternative.toDependency)}
+
+                ${escapeHtml(
+                    alternative.toDependency
+                )}
             </span>
 
             <span class="badge">
-                ${escapeHtml(alternative.relationship)}
+                ${escapeHtml(
+                    alternative.relationship
+                )}
             </span>
         `;
+
 
         container.appendChild(row);
     });
@@ -475,14 +714,59 @@ document
             return;
         }
 
+
         const name =
-            document.getElementById("targetName").textContent;
+            document
+                .getElementById("targetName")
+                .textContent;
+
 
         await loadDependency(
             selectedDependencyId,
             name
         );
     });
+
+
+// ---------------------------------------------------------
+// CLEAR OLD ANALYSIS
+// ---------------------------------------------------------
+
+function clearAnalysis() {
+
+    document
+        .getElementById("serviceCount")
+        .textContent = "—";
+
+    document
+        .getElementById("ownerCount")
+        .textContent = "—";
+
+    document
+        .getElementById("regionCount")
+        .textContent = "—";
+
+    document
+        .getElementById("alternativeCount")
+        .textContent = "—";
+
+
+    document
+        .getElementById("blastRadius")
+        .innerHTML = "";
+
+    document
+        .getElementById("owners")
+        .innerHTML = "";
+
+    document
+        .getElementById("regions")
+        .innerHTML = "";
+
+    document
+        .getElementById("alternatives")
+        .innerHTML = "";
+}
 
 
 // ---------------------------------------------------------
@@ -496,6 +780,7 @@ function showLoading() {
         .classList.remove("hidden");
 }
 
+
 function hideLoading() {
 
     document
@@ -503,15 +788,20 @@ function hideLoading() {
         .classList.add("hidden");
 }
 
+
 function showError(message) {
 
     const element =
         document.getElementById("error");
 
-    element.textContent = message;
+    element.textContent =
+        message;
 
-    element.classList.remove("hidden");
+    element.classList.remove(
+        "hidden"
+    );
 }
+
 
 function clearError() {
 
@@ -520,12 +810,33 @@ function clearError() {
         .classList.add("hidden");
 }
 
+
 function escapeHtml(value) {
 
     return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+
+        .replaceAll(
+            "&",
+            "&amp;"
+        )
+
+        .replaceAll(
+            "<",
+            "&lt;"
+        )
+
+        .replaceAll(
+            ">",
+            "&gt;"
+        )
+
+        .replaceAll(
+            '"',
+            "&quot;"
+        )
+
+        .replaceAll(
+            "'",
+            "&#039;"
+        );
 }

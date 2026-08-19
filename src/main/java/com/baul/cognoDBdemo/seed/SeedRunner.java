@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-@Component
 public class SeedRunner implements CommandLineRunner {
 
     private final Driver driver;

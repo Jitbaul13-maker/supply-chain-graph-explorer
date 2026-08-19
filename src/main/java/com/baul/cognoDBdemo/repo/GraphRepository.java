@@ -91,26 +91,28 @@ public class GraphRepository {
     public List<AffectedServiceResponse> findBlastRadius(String dependencyId) {
 
         String cypher = """
+
                 MATCH (d:Dependency {id: $dependencyId})
-                      <-[:SERVICE_DEPENDS_ON]-
-                      (s:Service)
+      <-[:SERVICE_DEPENDS_ON]-
+                (s:Service)
 
-                OPTIONAL MATCH path =
-                    (s)-[:SERVICE_DEPENDS_ON*0..3]->
-                    (downstream:Service)
+        OPTIONAL MATCH path =
+                (s)-[:SERVICE_DEPENDS_ON*0..3]->
+        (downstream:Service)
 
-                WITH downstream,
-                     CASE
-                         WHEN downstream = s THEN 0
-                         ELSE length(path)
-                     END AS hops
+        WITH downstream,
+                CASE
+        WHEN downstream = s THEN 0
+        ELSE length(path)
+                END AS hops
 
-                RETURN DISTINCT
-                       downstream.name AS service,
-                       hops
-                ORDER BY hops, service
-                """;
+        WITH downstream, min(hops) AS hops
 
+                RETURN
+        downstream.name AS service,
+                hops
+        ORDER BY hops, service
+""";
         try (Session session = driver.session()) {
 
             return session.run(

@@ -12,101 +12,243 @@
 <body>
 
 <header class="topbar">
-    <div>
-        <h1>CognoDB Impact Explorer</h1>
-        <p>Dependency impact analysis</p>
+
+    <div class="brand">
+
+        <div class="brand-mark">C</div>
+
+        <div>
+            <h1>CognoDB Impact Explorer</h1>
+            <p>Graph-based dependency intelligence</p>
+        </div>
+
     </div>
 
     <div class="status">
         <span class="status-dot"></span>
-        CognoDB Connected
+        Powered by CognoDB
     </div>
+
 </header>
 
 
 <main class="container">
 
-    <!-- Search -->
-    <section class="search-section">
+    <!-- HERO -->
 
-        <label for="searchInput">Search services or dependencies</label>
+    <section class="hero">
 
-        <div class="search-box">
-            <input
-                    id="searchInput"
-                    type="text"
-                    placeholder="e.g. Payment Gateway"
-            />
+        <div class="hero-content">
 
-            <button id="searchButton">
-                Search
-            </button>
+            <div class="eyebrow">
+                GRAPH-BASED DEPENDENCY ANALYSIS
+            </div>
+
+            <h2>
+                Understand the impact<br>
+                <span>before it becomes an incident.</span>
+            </h2>
+
+            <p class="hero-description">
+                Explore service dependencies, understand blast radius,
+                and identify the teams and environments affected by
+                a dependency failure.
+            </p>
+
         </div>
 
-        <div id="searchResults" class="search-results"></div>
+
+        <!-- SEARCH -->
+
+        <div class="search-card">
+
+            <label for="searchInput">
+                Explore the dependency graph
+            </label>
+
+            <div class="search-box">
+
+                <div class="search-input-wrapper">
+
+                    <span class="search-icon">⌕</span>
+
+                    <input
+                            id="searchInput"
+                            type="text"
+                            autocomplete="off"
+                            placeholder="Search for a service or dependency..."
+                    />
+
+                </div>
+
+                <button id="searchButton">
+                    Search
+                </button>
+
+            </div>
+
+            <div id="searchResults" class="search-results"></div>
+
+            <div class="search-hint">
+                Search by service or dependency name
+            </div>
+
+        </div>
 
     </section>
 
 
-    <!-- Selected target -->
+    <!-- FEATURE CARDS -->
+
+    <section class="feature-grid">
+
+        <div class="feature-card">
+
+            <div class="feature-icon">◈</div>
+
+            <div>
+                <h3>Blast Radius</h3>
+
+                <p>
+                    See which services depend on a selected
+                    dependency and how far impact can propagate.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">◎</div>
+
+            <div>
+                <h3>Ownership</h3>
+
+                <p>
+                    Identify the teams responsible for
+                    affected services.
+                </p>
+            </div>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon">◇</div>
+
+            <div>
+                <h3>Deployment Impact</h3>
+
+                <p>
+                    See where affected services are deployed
+                    across environments and regions.
+                </p>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- SELECTED TARGET -->
+
     <section id="targetSection" class="hidden">
 
         <div class="target-header">
 
             <div>
-                <span class="label">Selected dependency</span>
+
+                <span class="label">
+                    Selected dependency
+                </span>
+
                 <h2 id="targetName">—</h2>
+
             </div>
 
-            <button id="refreshButton" class="secondary-button">
-                Refresh
+            <button
+                    id="refreshButton"
+                    class="secondary-button">
+                ↻ Refresh
             </button>
 
         </div>
 
 
-        <!-- Summary cards -->
+        <!-- SUMMARY -->
+
         <div class="summary-grid">
 
             <div class="summary-card">
+
                 <span>Affected Services</span>
+
                 <strong id="serviceCount">0</strong>
+
             </div>
 
+
             <div class="summary-card">
+
                 <span>Owners</span>
+
                 <strong id="ownerCount">0</strong>
+
             </div>
 
+
             <div class="summary-card">
+
                 <span>Regions</span>
+
                 <strong id="regionCount">0</strong>
+
             </div>
 
+
             <div class="summary-card">
+
                 <span>Alternatives</span>
+
                 <strong id="alternativeCount">0</strong>
+
             </div>
 
         </div>
 
 
-        <!-- Graph -->
+        <!-- BLAST RADIUS -->
+
         <section class="panel">
 
             <div class="panel-header">
-                <h3>Blast Radius</h3>
-                <span>Dependency → affected services</span>
+
+                <div>
+
+                    <h3>Blast Radius</h3>
+
+                    <span>
+                        Dependency → affected services
+                    </span>
+
+                </div>
+
             </div>
 
-            <div id="blastRadius" class="blast-radius"></div>
+            <div
+                    id="blastRadius"
+                    class="blast-radius">
+            </div>
 
         </section>
 
 
+        <!-- OWNERS + REGIONS -->
+
         <div class="two-column">
 
-            <!-- Owners -->
             <section class="panel">
 
                 <div class="panel-header">
@@ -118,7 +260,6 @@
             </section>
 
 
-            <!-- Regions -->
             <section class="panel">
 
                 <div class="panel-header">
@@ -132,11 +273,24 @@
         </div>
 
 
-        <!-- Alternatives -->
+        <!-- ALTERNATIVES -->
+
         <section class="panel">
 
             <div class="panel-header">
-                <h3>Mitigation / Alternative Paths</h3>
+
+                <div>
+
+                    <h3>
+                        Mitigation / Alternative Paths
+                    </h3>
+
+                    <span>
+                        Potential alternative dependencies
+                    </span>
+
+                </div>
+
             </div>
 
             <div id="alternatives"></div>
@@ -146,14 +300,36 @@
     </section>
 
 
-    <!-- Loading -->
-    <div id="loading" class="loading hidden">
-        Loading graph data...
+    <!-- LOADING -->
+
+    <div
+            id="loading"
+            class="loading hidden"
+            aria-live="polite">
+
+        <div class="spinner"></div>
+
+        <div>
+
+            <strong>
+                Analyzing graph...
+            </strong>
+
+            <span>
+                Querying CognoDB for fresh impact data
+            </span>
+
+        </div>
+
     </div>
 
 
-    <!-- Error -->
-    <div id="error" class="error hidden"></div>
+    <!-- ERROR -->
+
+    <div
+            id="error"
+            class="error hidden">
+    </div>
 
 </main>
 
