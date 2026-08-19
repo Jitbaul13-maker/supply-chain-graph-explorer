@@ -91,7 +91,6 @@ public class GraphRepository {
     public List<AffectedServiceResponse> findBlastRadius(String dependencyId) {
 
         String cypher = """
-
                 MATCH (d:Dependency {id: $dependencyId})
       <-[:SERVICE_DEPENDS_ON]-
                 (s:Service)
