@@ -222,3 +222,86 @@ Service 004       hop 3
 The resulting services represent the potential impact of the dependency failure.
 
 The application then enriches this impact set with ownership, deployment-region, environment, and alternative-path information.
+
+## Core Cypher Queries
+
+The application uses parameterized Cypher queries to perform the main graph operations.
+
+### 1. Search
+
+Searches both `Service` and `Dependency` nodes by name.
+
+```cypher
+MATCH (n)
+WHERE (n:Service OR n:Dependency)
+  AND toLower(n.name) CONTAINS toLower($query)
+RETURN n.id AS id,
+       CASE
+           WHEN n:Service THEN 'Service'
+           WHEN n:Dependency THEN 'Dependency'
+       END AS type,
+       n.name AS name
+ORDER BY n.name
+LIMIT 20
+```
+
+The query allows the UI to search across both services and dependencies using a single endpoint.
+
+### 2. Dependency Traversal / Blast Radius
+
+Starting from a dependency, the application traverses downstream service relationships up to three hops.
+
+The traversal identifies the services that can potentially be affected by the dependency.
+
+```text
+Dependency
+    ↓
+Service
+    ↓
+Service
+    ↓
+Service
+```
+The result includes the affected service and its calculated hop distance.
+
+### 3. Affected Owners
+
+Once the affected services are identified, the graph is traversed through ownership relationships to determine the responsible teams.
+```text
+Affected Service ──OWNED_BY──> Team
+```
+
+### 4. Affected Regions
+
+The application follows deployment relationships to determine where affected services are running.
+
+```text
+Service
+   ↓
+Environment
+   ↓
+Region
+```
+
+This allows the application to distinguish impacts such as Production vs. Sandbox and regional deployment differences.
+
+### 5. Alternative Dependencies
+
+The graph also models relationships between dependencies that can represent alternative or related paths.
+
+```text
+Dependency 001 ──RELATED_TO──> Dependency 002
+```
+
+The application exposes these relationships as potential alternatives or mitigation paths.
+
+### 6. Aggregated Overview
+
+The overview operation combines the graph analysis into a single response containing:
+
+affected services and hop distance
+responsible teams
+affected environments and regions
+alternative dependencies
+
+This allows the frontend to retrieve the complete impact analysis with a single API request.
