@@ -845,6 +845,14 @@ See the [Database Seeding Documentation](docs/database-seeding.md) for the imple
 
 The documented runner is intended as a development/reference approach for initializing a fresh database rather than as part of the production application startup path.
 
+### About the Large Seed Dataset
+
+The large demonstration dataset uses a deterministic and structured dependency topology so that graph traversals produce reproducible results.
+
+Each dependency is connected to a consistent set of direct consumer services, while services are connected through a regular downstream dependency pattern. This allows the application to demonstrate bounded multi-hop traversal consistently across the dataset.
+
+As a result, some summary counts may be identical for multiple dependencies. These counts are calculated from the seeded graph topology by the application's Cypher queries; they are not hard-coded in the application.
+
 ### Recommended Initialization Flow
 
 For a fresh CognoDB instance:
