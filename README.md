@@ -34,3 +34,41 @@ The difficult part is not storing these entities. The difficult part is understa
 > If this dependency becomes unavailable, which services are affected, how far does the impact propagate, which teams own those services, where are they deployed, and are there alternative paths?
 
 CognoDB Impact Explorer models these relationships as a graph and uses graph traversal to answer these questions.
+
+## Why a Graph Database?
+
+The core problem is relationship-heavy.
+
+A dependency can affect a service, which can affect another service, which can be deployed in an environment, which runs in a region, while each affected service is owned by a team.
+
+Conceptually, the traversal looks like:
+
+Dependency
+    ↓
+Service
+    ↓
+Service
+    ↓
+Environment
+    ↓
+Region
+
+with ownership and alternative paths attached to the graph.
+
+In a relational design, answering the same questions would require repeatedly joining dependency, service, ownership, deployment, environment, region, and mitigation tables.
+
+A graph database represents these relationships directly.
+
+This makes multi-hop traversal a first-class operation rather than reconstructing the relationship network through repeated relational joins.
+
+### What the graph enables
+
+The application can answer:
+
+1. Which services directly depend on a dependency?
+2. Which downstream services can be affected across multiple hops?
+3. Which teams own those services?
+4. Which environments and regions are affected?
+5. Are there alternative or mitigation paths?
+
+These are graph traversal questions, which makes a graph-oriented data model a natural fit.
