@@ -153,3 +153,72 @@ The application follows a simple layered architecture:
 - The frontend uses the response to update the interface.
 
 This separation keeps HTTP handling, application logic, and graph queries independent from each other.
+
+## Graph Model
+
+The application models the supply-chain dependency landscape as a connected graph.
+
+### Nodes
+
+| Node | Description |
+|---|---|
+| `Service` | An application or service that participates in the dependency chain. |
+| `Dependency` | An external or shared component that services depend on. |
+| `Team` | The team responsible for a service. |
+| `Environment` | The deployment environment, such as Production or Sandbox. |
+| `Region` | The geographic region where a service is deployed. |
+
+### Relationships
+
+The graph connects these entities through relationships representing dependency, ownership, and deployment information.
+
+At the core of the model is the dependency chain:
+
+```text
+Dependency
+     │
+     ▼
+ Service
+     │
+     ▼
+ Service
+     │
+     ▼
+ Service
+```
+Additional relationships provide operational context:
+
+```text
+                    ┌───> Team
+                    │
+Dependency → Service ───> Environment
+                    │          │
+                    │          ▼
+                    │        Region
+                    │
+                    └───> Dependency
+```
+This structure allows the application to traverse the dependency graph and then associate the affected services with their owners, deployment environments, regions, and alternative dependencies.
+
+### Graph Traversal
+
+For blast-radius analysis, the application starts from a selected dependency and follows downstream service relationships up to a defined number of hops.
+
+```text
+Dependency 001
+      │
+      ▼
+Service 001       hop 0
+      │
+      ▼
+Service 002       hop 1
+      │
+      ▼
+Service 003       hop 2
+      │
+      ▼
+Service 004       hop 3
+```
+The resulting services represent the potential impact of the dependency failure.
+
+The application then enriches this impact set with ownership, deployment-region, environment, and alternative-path information.
