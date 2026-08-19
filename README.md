@@ -222,18 +222,18 @@ The application models the supply-chain dependency landscape as a connected grap
                                     │ (reverse: Service → Team)
                                     │
 ┌─────────────┐                     ▼
-│ Dependency  │  DEPENDS_ON  ┌─────────────┐            ┌───────────────────┐
-|             | ◄─────────── |             |            |                   |         
-│             │              │   Service   │            |   Incident        |
-│ id: string  │◄───────────  │             │◄───────────|                   |
-│ name        │ RELATED_TO   │  id: string │  AFFECTS   |   id: string      |
-│ type        │ (alt path)   │      name   │            |    severity       |
+│ Dependency  │              ┌─────────────┐            ┌───────────────────┐
+|             |              |             |            |                   |         
+│             │  DEPENDS_ON  │   Service   │            |   Incident        |
+│ id: string  │  ◄───────────│             │◄───────────|                   |
+│ name        │              │  id: string │  AFFECTS   |   id: string      |
+│ type        │              │      name   │            |    severity       |
 └─────────────┘              └──────┬──────┘            └───────────────────┘
-                                    │
-                         DEPLOYED_IN│
-                                    ▼
-                             ┌─────────────┐
-                             │  Environment│
+   ▲       |                        │
+   |       |             DEPLOYED_IN│
+   |_______|                        ▼
+RELATED_TO                   ┌─────────────┐
+(alt path)                   │  Environment│
                              │   name      │
                              │   (Prod/    │
                              │   Sandbox)  │
@@ -502,8 +502,10 @@ This is particularly useful for impact analysis because the question is fundamen
 Once the directly affected services are identified, the graph follows ownership relationships to determine which teams are responsible for those services.
 
 The relationship is:
-```cypher
+```text
 Service ──OWNED_BY──> Team
+```
+```cypher
 MATCH (d:Dependency {id: $dependencyId})
       <-[:SERVICE_DEPENDS_ON]-
       (s:Service)
