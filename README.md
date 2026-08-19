@@ -36,7 +36,7 @@ selected dependency.
 ![Blast radius view](docs/screenshots/03-blast-radius.png)
 
 ### 4. Owners, Environments & Regions
-Responsible teams and deployment footprint for the affected services.
+Affected teams and deployment footprint for the affected services.
 
 ![Owners and regions](docs/screenshots/04-owners-regions.png)
 
