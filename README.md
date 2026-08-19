@@ -159,9 +159,9 @@ With a relational approach, these operations would require repeatedly joining re
 With a graph database, the relationships are represented directly as edges in the graph, and Cypher can express the traversal more naturally.
 
 For example, the blast-radius query can start at a dependency and traverse downstream service relationships up to a defined depth:
-
+```text
 Dependency → Service → Service → Service
-
+```
 The resulting services form the dependency's potential blast radius.
 
 ## Architecture
@@ -883,9 +883,20 @@ git clone https://github.com/Jitbaul13-maker/supply-chain-graph-explorer.git
 cd supply-chain-graph-explorer
 ```
 
-### 2. Configure environment variables
+### 2. Creating a CognoDB Instance
 
-Create a .env file for local development:
+For a fresh setup, create a CognoDB instance through the CognoDB Cloud console.
+
+1. Sign in to CognoDB Cloud.
+2. Create a new graph database instance.
+3. Wait for the instance to become available.
+4. Open the instance details and copy the Bolt connection URI.
+5. Note the database username and password.
+6. Configure these values as environment variables:
+
+### 3. Configure environment variables
+
+Create a `.env` file for local development using the credentials from the CognoDB instance:
 ```text
 COGNODB_URI=<your-cognodb-bolt-uri>
 COGNODB_USERNAME=<your-cognodb-username>
@@ -893,13 +904,13 @@ COGNODB_PASSWORD=<your-cognodb-password>
 ```
 The .env file is intentionally excluded from version control.
 
-### 3. Populate CognoDB
+### 4. Populate CognoDB
 
 For a fresh database, execute the provided seed-large.cypher dataset against CognoDB.
 
 The documented SeedRunner example in Database Seeding Documentation demonstrates one way to execute the seed through the Neo4j Java Driver.
 
-### 4. Run the application
+### 5. Run the application
 
 The application can be started using Maven:
 
