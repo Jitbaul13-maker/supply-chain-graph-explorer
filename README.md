@@ -172,6 +172,46 @@ This separation keeps HTTP handling, application logic, and graph queries indepe
 
 The application models the supply-chain dependency landscape as a connected graph.
 
+```text
+
+                         ┌─────────────┐
+                         │    Team       │
+                         └──────┬──────┘
+                                  │ OWNED_BY
+                                  │ (reverse: Service → Team)
+                                  │
+┌─────────────┐  DEPENDS_ON    ▼
+│ Dependency    │───────────►┌─────────────┐
+│               │              │   Service      │
+│ id: string    │◄───────────│                │
+│ name          │ RELATED_TO   │  id: string    │
+│ tier          │ (alt path)   │      name      │
+└─────────────┘              └──────┬──────┘
+                                        │
+                             DEPLOYED_IN│
+                                        ▼
+                             ┌─────────────┐
+                             │  Environment  │
+                             │   name        │
+                             │   (Prod/      │
+                             │   Sandbox)    │
+                             └──────┬──────┘
+                                     │ RUNS_ON
+                                     ▼
+                            ┌─────────────┐
+                            │     Region    │
+                            │      name     │
+                            └─────────────┘
+
+Legend:
+  (Dependency)-[:DEPENDS_ON]->(Service)        service consumes a dependency
+  (Service)-[:DEPENDS_ON]->(Service)           downstream service dependency
+  (Service)-[:OWNED_BY]->(Team)                ownership
+  (Service)-[:DEPLOYED_IN]->(Environment)      deployment context
+  (Environment)-[:RUNS_ON]->(Region)           geographic placement
+  (Dependency)-[:RELATED_TO]->(Dependency)     alternative / mitigation path
+```
+
 ### Nodes
 
 | Node | Description |
@@ -263,6 +303,33 @@ Service
 Service
 ```
 The result includes the affected service and its calculated hop distance.
+
+### Why this query is awkward in a relational database
+
+The blast-radius query has no fixed depth — a dependency might affect
+one service or five, three hops deep or one, depending on how the
+graph happens to be shaped. In Cypher this is a single variable-length
+pattern:
+
+​```cypher
+MATCH (d:Dependency {id: $dependencyId})-[:DEPENDS_ON*1..3]->(s:Service)
+RETURN DISTINCT s, length(path) AS hops
+​```
+
+In a relational schema, the same question requires either:
+
+- A fixed number of self-joins on a `service_dependencies` table, one
+  join per hop — which only works if you decide the max depth in
+  advance and hard-code that many joins, or
+- A recursive CTE, which most relational engines support but which
+  scales poorly and reads far less naturally than a bounded graph
+  traversal.
+
+Because the depth of impact is exactly the thing you don't know in
+advance when an incident starts, expressing "how far does this
+propagate" as a first-class, depth-flexible query — rather than a
+fixed join chain — is the core advantage a graph database provides
+here.
 
 ### 3. Affected Owners
 
