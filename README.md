@@ -103,3 +103,39 @@ For example, the blast-radius query can start at a dependency and traverse downs
 Dependency → Service → Service → Service
 
 The resulting services form the dependency's potential blast radius.
+
+## Architecture
+
+The application follows a simple layered architecture:
+
+```text
+┌──────────────────────────────┐
+│          Web UI              │
+│   Thymeleaf + JavaScript     │
+└──────────────┬───────────────┘
+               │ HTTP / JSON
+               ▼
+┌──────────────────────────────┐
+│      Spring Boot API         │
+│                              │
+│  GraphController             │
+│          ↓                   │
+│  GraphService                │
+│          ↓                   │
+│  GraphRepository             │
+└──────────────┬───────────────┘
+               │
+        Neo4j Java Driver
+          / Bolt protocol
+               │
+               ▼
+┌──────────────────────────────┐
+│          CognoDB             │
+│                              │
+│  Services                    │
+│  Dependencies                │
+│  Teams                       │
+│  Environments / Regions      │
+│  Relationships               │
+└──────────────────────────────┘
+```
