@@ -1,4 +1,4 @@
-package com.baul.cognoDBdemo.services;
+package com.baul.cognoDBdemo.service;
 
 import com.baul.cognoDBdemo.dto.AffectedServiceResponse;
 import com.baul.cognoDBdemo.dto.AlternativePathResponse;
@@ -7,7 +7,7 @@ import com.baul.cognoDBdemo.dto.GraphNodeResponse;
 import com.baul.cognoDBdemo.dto.OwnerResponse;
 import com.baul.cognoDBdemo.dto.RegionResponse;
 import com.baul.cognoDBdemo.exception.GraphNotFoundException;
-import com.baul.cognoDBdemo.repo.GraphRepository;
+import com.baul.cognoDBdemo.repository.GraphRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

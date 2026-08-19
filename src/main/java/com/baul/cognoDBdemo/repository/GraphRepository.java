@@ -1,4 +1,4 @@
-package com.baul.cognoDBdemo.repo;
+package com.baul.cognoDBdemo.repository;
 
 import com.baul.cognoDBdemo.dto.AffectedServiceResponse;
 import com.baul.cognoDBdemo.dto.AlternativePathResponse;

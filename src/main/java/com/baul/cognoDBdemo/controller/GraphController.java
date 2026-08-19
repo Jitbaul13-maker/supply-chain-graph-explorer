@@ -6,7 +6,7 @@ import com.baul.cognoDBdemo.dto.BlastRadiusResponse;
 import com.baul.cognoDBdemo.dto.GraphNodeResponse;
 import com.baul.cognoDBdemo.dto.OwnerResponse;
 import com.baul.cognoDBdemo.dto.RegionResponse;
-import com.baul.cognoDBdemo.services.GraphService;
+import com.baul.cognoDBdemo.service.GraphService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
