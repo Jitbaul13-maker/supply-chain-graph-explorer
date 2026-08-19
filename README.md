@@ -13,6 +13,7 @@ The live deployment is backed by CognoDB and uses the large seeded graph dataset
 - Search services and dependencies
 - Trace multi-hop dependency impact
 - Identify affected services
+- Identify incident seerity
 - Identify responsible teams
 - Inspect affected environments and regions
 - Discover alternative or mitigation paths
