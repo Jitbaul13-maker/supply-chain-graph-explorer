@@ -62,7 +62,7 @@ A short walkthrough of the application demonstrating dependency search,
 blast-radius analysis, responsible owners, deployment impact,
 incident context, alternative paths, and the overall impact-analysis workflow.
 
-**[▶️ Watch the demo](https://drive.google.com/file/d/15TbVEYcVjCQZW-EyAIAvCNqyaqOcqmnG/view?usp=sharing)
+**[▶️ Watch the demo](https://drive.google.com/file/d/15TbVEYcVjCQZW-EyAIAvCNqyaqOcqmnG/view?usp=sharing)**
 
 ## Tech Stack
 
