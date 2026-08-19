@@ -417,7 +417,8 @@ function renderOverview(data) {
 
 
     renderBlastRadius(
-        data.affectedServices
+        data.affectedServices,
+        data.incidents
     );
 
     renderOwners(
@@ -438,7 +439,7 @@ function renderOverview(data) {
 // BLAST RADIUS
 // ---------------------------------------------------------
 
-function renderBlastRadius(services) {
+function renderBlastRadius(services, incidents) {
 
     const container =
         document.getElementById("blastRadius");
@@ -520,6 +521,11 @@ function renderBlastRadius(services) {
         serviceNode.className =
             "graph-service-node";
 
+        const serviceIncidents =
+                incidents.filter(
+                    incident => incident.service === service.service
+                );
+
 
         serviceNode.innerHTML = `
             <div>
@@ -538,8 +544,15 @@ function renderBlastRadius(services) {
                 ${service.hops}
                 hop${service.hops === 1 ? "" : "s"}
             </span>
-        `;
 
+            ${serviceIncidents.map(incident => `
+                <div class="incident-badge ${incident.severity.toLowerCase()}">
+                    <span>INCIDENT</span>
+                    <strong>${escapeHtml(incident.incident)}</strong>
+                    <small>${escapeHtml(incident.severity)}</small>
+                </div>
+            `).join("")}
+        `;
 
         connection.appendChild(line);
 

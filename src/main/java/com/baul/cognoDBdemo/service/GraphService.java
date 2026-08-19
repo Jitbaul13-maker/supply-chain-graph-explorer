@@ -6,6 +6,7 @@ import com.baul.cognoDBdemo.dto.BlastRadiusResponse;
 import com.baul.cognoDBdemo.dto.GraphNodeResponse;
 import com.baul.cognoDBdemo.dto.OwnerResponse;
 import com.baul.cognoDBdemo.dto.RegionResponse;
+import com.baul.cognoDBdemo.dto.IncidentResponse;
 import com.baul.cognoDBdemo.exception.GraphNotFoundException;
 import com.baul.cognoDBdemo.repository.GraphRepository;
 import org.springframework.stereotype.Service;
@@ -74,12 +75,16 @@ public class GraphService {
         List<AlternativePathResponse> alternatives =
                 graphRepository.findAlternatives(dependencyId);
 
+        List<IncidentResponse> incidents =
+                graphRepository.findIncidents(dependencyId);
+
         return new BlastRadiusResponse(
                 dependencyId,
                 affectedServices,
                 owners,
                 regions,
-                alternatives
+                alternatives,
+                incidents
         );
     }
 }

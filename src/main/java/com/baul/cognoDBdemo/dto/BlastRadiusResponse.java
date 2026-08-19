@@ -3,10 +3,10 @@ package com.baul.cognoDBdemo.dto;
 import java.util.List;
 
 public record BlastRadiusResponse(
-        String target,
+        String dependencyId,
         List<AffectedServiceResponse> affectedServices,
         List<OwnerResponse> owners,
         List<RegionResponse> regions,
-        List<AlternativePathResponse> alternatives
-) {
-}
+        List<AlternativePathResponse> alternatives,
+        List<IncidentResponse> incidents
+) {}

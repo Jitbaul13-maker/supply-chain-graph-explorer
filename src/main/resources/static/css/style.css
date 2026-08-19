@@ -680,6 +680,68 @@ button:disabled {
     font-weight: 600;
 }
 
+.incident-badge {
+    margin-top: 4px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+.incident-badge span {
+    display: block;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #64748b;
+}
+
+.incident-badge strong {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+}
+
+.incident-badge small {
+    display: block;
+    margin-top: 3px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.incident-badge.low {
+    border-color: #86efac;
+}
+
+.incident-badge.low small {
+    color: #15803d;
+}
+
+.incident-badge.medium {
+    border-color: #fde68a;
+}
+
+.incident-badge.medium small {
+    color: #a16207;
+}
+
+.incident-badge.high {
+    border-color: #fdba74;
+}
+
+.incident-badge.high small {
+    color: #c2410c;
+}
+
+.incident-badge.critical {
+    border-color: #fca5a5;
+}
+
+.incident-badge.critical small {
+    color: #b91c1c;
+}
+
 
 /* =========================================================
    TABLE / LIST DATA

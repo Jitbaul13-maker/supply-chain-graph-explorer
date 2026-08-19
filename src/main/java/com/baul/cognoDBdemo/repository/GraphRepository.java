@@ -5,6 +5,7 @@ import com.baul.cognoDBdemo.dto.AlternativePathResponse;
 import com.baul.cognoDBdemo.dto.GraphNodeResponse;
 import com.baul.cognoDBdemo.dto.OwnerResponse;
 import com.baul.cognoDBdemo.dto.RegionResponse;
+import com.baul.cognoDBdemo.dto.IncidentResponse;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Session;
 import org.springframework.stereotype.Repository;
@@ -120,6 +121,39 @@ public class GraphRepository {
             ).list(record -> new AffectedServiceResponse(
                     record.get("service").asString(),
                     record.get("hops").asInt()
+            ));
+        }
+    }
+
+    // --------------------------------------------------------
+    // 4. Incident
+    // --------------------------------------------------------
+
+    public List<IncidentResponse> findIncidents(String dependencyId) {
+
+        String cypher = """
+            MATCH (d:Dependency {id: $dependencyId})
+                  <-[:SERVICE_DEPENDS_ON]-
+                  (s:Service)
+                  <-[:AFFECTS]-
+                  (i:Incident)
+
+            RETURN DISTINCT
+                   s.name AS service,
+                   i.name AS incident,
+                   i.severity AS severity
+            ORDER BY service, incident
+            """;
+
+        try (Session session = driver.session()) {
+
+            return session.run(
+                    cypher,
+                    parameters("dependencyId", dependencyId)
+            ).list(record -> new IncidentResponse(
+                    record.get("service").asString(),
+                    record.get("incident").asString(),
+                    record.get("severity").asString()
             ));
         }
     }
