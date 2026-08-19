@@ -13,7 +13,7 @@ The live deployment is backed by CognoDB and uses the large seeded graph dataset
 - Search services and dependencies
 - Trace multi-hop dependency impact
 - Identify affected services
-- Identify incident seerity
+- Identify incident severity
 - Identify responsible teams
 - Inspect affected environments and regions
 - Discover alternative or mitigation paths
@@ -36,8 +36,8 @@ selected dependency.
 
 ![Blast radius view](docs/screenshots/03-blast-radius.png)
 
-### 4. Owners, Environments & Regions
-Responsible teams and deployment footprint for the affected services.
+### 4. Responsible Owners, Deployment & Incident Context
+Responsible teams, deployment footprint, and incident context for directly affected services.
 
 ![Owners and regions](docs/screenshots/04-owners-regions.png)
 
@@ -161,36 +161,36 @@ The resulting services form the dependency's potential blast radius.
 The application follows a simple layered architecture:
 
 ```text
-┌──────────────────────────────┐
-│          Web UI              │
-│   Thymeleaf + JavaScript     │
-└──────────────┬───────────────┘
-               │ HTTP / JSON
-               ▼
-┌──────────────────────────────┐
-│      Spring Boot API         │
-│                              │
-│  GraphController             │
-│          ↓                   │
-│  GraphService                │
-│          ↓                   │
-│  GraphRepository             │
-└──────────────┬───────────────┘
-               │
-        Neo4j Java Driver
-               |
-           Bolt protocol
-               │
-               ▼
-┌──────────────────────────────┐
-│          CognoDB             │
-│                              │
-│  Services                    │
-│  Dependencies                │
-│  Teams                       │
-│  Environments / Regions      │
-│  Relationships               │
-└──────────────────────────────┘
+                    ┌──────────────────────────────┐
+                    │          Web UI              │
+                    │   Thymeleaf + JavaScript     │
+                    └──────────────┬───────────────┘
+                                   │ HTTP / JSON
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │      Spring Boot API         │
+                    │                              │
+                    │  GraphController             │
+                    │          ↓                   │
+                    │  GraphService                │
+                    │          ↓                   │
+                    │  GraphRepository             │
+                    └──────────────┬───────────────┘
+                                   │
+                            Neo4j Java Driver
+                                   |
+                               Bolt protocol
+                                   │
+                                   ▼
+                    ┌──────────────────────────────┐
+                    │          CognoDB             │
+                    │                              │
+                    │  Services                    │
+                    │  Dependencies                │
+                    │  Teams                       │
+                    │  Environments / Regions      │
+                    │  Relationships               │
+                    └──────────────────────────────┘
 ```
 ## Request flow
 
@@ -213,45 +213,45 @@ The application models the supply-chain dependency landscape as a connected grap
 
 ```text
 
-                             ┌───────────────┐
-                             │    Team       |
-                             |   id: string  |
-                             |      name     |
-                             │               |
-                             └──────┬────────┘
-                                    │ OWNED_BY
-                                    │ (reverse: Service → Team)
-                                    │
-┌─────────────┐                     ▼
-│ Dependency  │              ┌─────────────┐            ┌───────────────────┐
-|             |              |             |            |                   |         
-│             │  DEPENDS_ON  │   Service   │            |   Incident        |
-│ id: string  │  ◄───────────│             │◄───────────|                   |
-│ name        │              │  id: string │  AFFECTS   |   id: string      |
-│ type        │              │      name   │            |    severity       |
-└─────────────┘              └──────┬──────┘            └───────────────────┘
-   ▲       |                        │
-   |       |             DEPLOYED_IN│
-   |_______|                        ▼
-RELATED_TO                   ┌─────────────┐
-(alt path)                   │  Environment│
-                             │   name      │
-                             │   (Prod/    │
-                             │   Sandbox)  │
-                             └──────┬──────┘
-                                    │ RUNS_ON
-                                    ▼
-                            ┌─────────────┐
-                            │   Region    │
-                            │    name     │
-                            └─────────────┘
+                                                         ┌───────────────┐
+                                                         │    Team       |
+                                                         |   id: string  |
+                                                         |      name     |
+                                                         │               |
+                                                         └──────┬────────┘
+                                                                │ OWNED_BY
+                                                                │ (reverse: Service → Team)
+                                                                │
+                    ┌─────────────┐                             ▼
+                    │ Dependency  │                      ┌─────────────┐            ┌───────────────────┐
+                    |             |                      |             |            |                   |         
+                    │             │  SERVICE_DEPENDS_ON  │   Service   │            |   Incident        |
+                    │ id: string  │ ◄─────────────────   │             │◄───────────|                   |
+                    │ name        │                      │  id: string │  AFFECTS   |   id: string      |
+                    │ type        │                      │      name   │            |    severity       |
+                    └─────────────┘                      └──────┬──────┘            └───────────────────┘
+                       ▲       |                                │
+                       |       |                     DEPLOYED_IN│
+                       |_______|                                ▼
+                    ALTERNATIVE_TO                       ┌─────────────┐
+                    (alt path)                           │  Environment│
+                                                         │   name      │
+                                                         │   (Prod/    │
+                                                         │   Sandbox)  │
+                                                         └──────┬──────┘
+                                                                │ RUNS_ON
+                                                                ▼
+                                                        ┌─────────────┐
+                                                        │   Region    │
+                                                        │    name     │
+                                                        └─────────────┘
 
 Legend:
-  (Service)-[:SERVICE_DEPENDS_ON]->(Service)   downstream service dependency
-  (Service)-[:OWNED_BY]->(Team)                ownership
-  (Service)-[:DEPLOYED_IN]->(Environment)      deployment context
-  (Environment)-[:RUNS_ON]->(Region)           geographic placement
-  (Dependency)-[:RELATED_TO]->(Dependency)     alternative / mitigation path
+  (Service)-[:SERVICE_DEPENDS_ON]->(Service)       downstream service dependency
+  (Service)-[:OWNED_BY]->(Team)                    ownership
+  (Service)-[:DEPLOYED_IN]->(Environment)          deployment context
+  (Environment)-[:RUNS_ON]->(Region)               geographic placement
+  (Dependency)-[:ALTERNATIVE_TO]->(Dependency)     alternative / mitigation path
   (Incident)-[:AFFECTS]->(Service)             
 ```
 
@@ -261,6 +261,7 @@ Legend:
 |---|---|
 | `Service` | An application or service that participates in the dependency chain. |
 | `Dependency` | An external or shared component that services depend on. |
+| `Incident` | An operational incident associated with a service, including its severity. |
 | `Team` | The team responsible for a service. |
 | `Environment` | The deployment environment, such as Production or Sandbox. |
 | `Region` | The geographic region where a service is deployed. |
@@ -741,7 +742,8 @@ The response combines the results of the graph analysis into a single JSON docum
   "affectedServices": [],
   "owners": [],
   "regions": [],
-  "alternatives": []
+  "alternatives": [],
+  "incidents": [],
 }
 ```
 
@@ -801,7 +803,7 @@ The backend performs the required graph traversals against CognoDB and returns t
 The UI presents the results in separate sections:
 
 - **Affected Services** — services within the calculated blast radius and their hop distance.
-- **incidents** - Immediate operational incidents associated with directly affected services
+- **incidents** - Immediate operational incidents associated with directly affected services.
 - **Owners** — teams responsible for affected services.
 - **Regions & Environments** — deployment locations and environments affected.
 - **Alternatives** — related or alternative dependency paths.
