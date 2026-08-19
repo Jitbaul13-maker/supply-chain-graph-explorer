@@ -256,6 +256,7 @@ The application models the supply-chain dependency landscape as a connected grap
 
 Legend:
   (Service)-[:SERVICE_DEPENDS_ON]->(Service)                   downstream service dependency
+  (Service)-[:SERVICE_DEPENDS_ON]->(Dependency)                service dependency
   (Service)-[:OWNED_BY]->(Team)                                ownership
   (Service)-[:DEPLOYED_IN]->(Environment)                      deployment context
   (Environment)-[:RUNS_ON]->(Region)                           geographic placement
@@ -626,7 +627,7 @@ ORDER BY toDependency
 
 How it works
 
-The query starts from the selected dependency and follows its ALTERNATIVE_TO relationships.
+The query starts from the selected dependency and follows its `RELATED_TO` or `ALTERNATIVE_TO` relationships.
 
 For example:
 ```text
@@ -638,7 +639,7 @@ This allows the application to expose possible alternatives that could be consid
 
 The graph relationship makes this a direct neighborhood lookup rather than requiring a separate mapping structure.
 
-7. Incident Context
+### 7. Incident Context
 
 The graph also contains operational incident information.
 
@@ -756,7 +757,7 @@ The response combines the results of the graph analysis into a single JSON docum
   "owners": [],
   "regions": [],
   "alternatives": [],
-  "incidents": [],
+  "incidents": []
 }
 ```
 
@@ -816,9 +817,9 @@ The backend performs the required graph traversals against CognoDB and returns t
 The UI presents the results in separate sections:
 
 - **Affected Services** — services within the calculated blast radius and their hop distance.
-- **incidents** - Immediate operational incidents associated with directly affected services.
+- **Incidents** - Immediate operational incidents associated with directly affected services.
 - **Owners** — teams responsible for affected services.
-- **Regions & Environments** — deployment locations and environments affected.
+- **Deployments** — deployment locations and environments affected.
 - **Alternatives** — related or alternative dependency paths.
 
 This allows a user to move from a single dependency to an operational view of its potential impact without manually querying the graph.
