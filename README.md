@@ -244,7 +244,7 @@ The application models the supply-chain dependency landscape as a connected grap
 
 Legend:
   (Dependency)-[:DEPENDS_ON]->(Service)        service consumes a dependency
-  (Service)-[:DEPENDS_ON]->(Service)           downstream service dependency
+  (Service)-[:SERVICE_DEPENDS_ON]->(Service)           downstream service dependency
   (Service)-[:OWNED_BY]->(Team)                ownership
   (Service)-[:DEPLOYED_IN]->(Environment)      deployment context
   (Environment)-[:RUNS_ON]->(Region)           geographic placement
@@ -351,18 +351,14 @@ graph happens to be shaped. In Cypher this is a single variable-length
 pattern:
 
 ​```cypher
-MATCH (d:Dependency {id: $dependencyId})-[:DEPENDS_ON*1..3]->(s:Service)
+MATCH (d:Dependency {id: $dependencyId})-[:SERVICE_DEPENDS_ON*1..3]->(s:Service)
 RETURN DISTINCT s, length(path) AS hops
 ​```
 
 In a relational schema, the same question requires either:
 
-- A fixed number of self-joins on a `service_dependencies` table, one
-  join per hop — which only works if you decide the max depth in
-  advance and hard-code that many joins, or
-- A recursive CTE, which most relational engines support but which
-  scales poorly and reads far less naturally than a bounded graph
-  traversal.
+- A fixed number of self-joins on a `service_dependencies` table, one join per hop — which only works if you decide the max depth in advance and hard-code that many joins, or
+- A recursive CTE, which most relational engines support but which scales poorly and reads far less naturally than a bounded graph traversal.
 
 Because the depth of impact is exactly the thing you don't know in
 advance when an incident starts, expressing "how far does this
