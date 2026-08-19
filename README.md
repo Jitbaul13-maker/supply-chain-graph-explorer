@@ -366,7 +366,7 @@ propagate" as a first-class, depth-flexible query — rather than a
 fixed join chain — is the core advantage a graph database provides
 here.
 
-### 3. Affected Owners
+### 3. Responsible Owners
 
 Once the affected services are identified, the graph is traversed through ownership relationships to determine the responsible teams.
 ```text
