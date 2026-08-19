@@ -4,7 +4,7 @@ A graph-powered dependency intelligence tool for exploring how a dependency fail
 
 ## 🚀 Live Demo
 
-**[Open the live application](https://drive.google.com/file/d/15TbVEYcVjCQZW-EyAIAvCNqyaqOcqmnG/view?usp=sharing)**
+**[Open the live application](https://supply-chain-graph-explorer-production.up.railway.app/)**
 
 The live deployment is backed by CognoDB and uses the large seeded graph dataset.
 
@@ -62,7 +62,7 @@ A short walkthrough of the application demonstrating dependency search,
 blast-radius analysis, responsible owners, deployment impact,
 incident context, alternative paths, and the overall impact-analysis workflow.
 
-**[▶️ Watch the demo](https://drive.google.com/file/d/1JDE0MRysDYmfWAH0EBq5SJNq1FrUbR7O/view?usp=drive_link)**
+**[▶️ Watch the demo](https://drive.google.com/file/d/15TbVEYcVjCQZW-EyAIAvCNqyaqOcqmnG/view?usp=sharing)
 
 ## Tech Stack
 
