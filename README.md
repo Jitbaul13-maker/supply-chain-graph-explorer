@@ -1,4 +1,4 @@
-# CognoDB Impact Explorer
+# Supply-Chain Impact Explorer
 
 A graph-powered dependency intelligence tool for exploring how a dependency failure propagates through services, teams, environments, and regions.
 
@@ -401,3 +401,41 @@ Regions & Environments — deployment locations and environments affected.
 Alternatives — related or alternative dependency paths.
 
 This allows a user to move from a single dependency to an operational view of its potential impact without manually querying the graph.
+
+## Seed Data & Database Initialization
+
+The application uses a large Cypher seed script to populate the CognoDB graph with the services, dependencies, teams, environments, regions, and relationships required for the demonstration.
+
+The seed script is located at:
+
+```text
+src/main/resources/scripts/seed-large.cypher
+```
+
+### Database Seeding
+
+Database seeding is intentionally kept separate from the normal application startup flow.
+
+The deployed Spring Boot application connects to the already-populated CognoDB instance and does not automatically execute the seed script on startup. This prevents the dataset from being re-created whenever the application restarts or is redeployed.
+
+For reference, the project documentation contains an example SeedRunner implementation showing how the Cypher seed can be loaded from the application classpath and executed through the Neo4j Java Driver.
+
+See:
+```link
+docs/database-seeding.md
+```
+The documented runner is intended as a development/reference approach for initializing a fresh database rather than as part of the production application startup path.
+
+### Recommended Initialization Flow
+
+For a fresh CognoDB instance:
+```text
+seed-large.cypher
+       ↓
+CognoDB
+       ↓
+Spring Boot application
+       ↓
+REST API / UI
+```
+Once the graph has been populated, the application treats CognoDB as its persistent data source and does not reseed the database during normal startup.
