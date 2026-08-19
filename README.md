@@ -458,11 +458,11 @@ cd supply-chain-graph-explorer
 ### 2. Configure environment variables
 
 Create a .env file for local development:
-
+```text
 COGNODB_URI=<your-cognodb-bolt-uri>
 COGNODB_USERNAME=<your-cognodb-username>
 COGNODB_PASSWORD=<your-cognodb-password>
-
+```
 The .env file is intentionally excluded from version control.
 
 ### 3. Populate CognoDB
@@ -507,3 +507,58 @@ The application reads the following variables from the environment:
 | COGNODB_PASSWORD | CognoDB password|
 
 Credentials should never be committed to the repository.
+
+## Deployment
+
+The application is containerized using Docker and deployed as a Spring Boot service on Railway.
+
+### Deployment Architecture
+
+```text
+GitHub
+   │
+   │ push to main
+   ▼
+Railway
+   │
+   ▼
+Docker build
+   │
+   ▼
+Spring Boot application
+   │
+   ▼
+CognoDB
+```
+
+### Environment Variables
+
+Production credentials are not stored in the repository.
+
+Railway provides the following environment variables to the application at runtime:
+```text
+COGNODB_URI
+COGNODB_USERNAME
+COGNODB_PASSWORD
+```
+The application reads these values from the environment and uses them to establish the Bolt connection to CognoDB.
+
+### Port Configuration
+
+Railway provides the application port through the PORT environment variable.
+
+The Docker entrypoint uses the platform-provided port when available and falls back to port 8081 for local execution.
+
+```text
+Railway
+  PORT → Spring Boot
+
+Local
+  PORT not set → 8081
+```
+
+Continuous Deployment
+
+The repository is connected to Railway through the Railway GitHub App.
+
+Commits pushed to the configured main branch can therefore trigger a new deployment automatically.
