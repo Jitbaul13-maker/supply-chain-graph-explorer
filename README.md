@@ -139,7 +139,8 @@ The application follows a simple layered architecture:
 └──────────────┬───────────────┘
                │
         Neo4j Java Driver
-          / Bolt protocol
+               |
+           Bolt protocol
                │
                ▼
 ┌──────────────────────────────┐
@@ -188,20 +189,6 @@ The graph connects these entities through relationships representing dependency,
 At the core of the model is the dependency chain:
 
 ```text
-Dependency
-     │
-     ▼
- Service
-     │
-     ▼
- Service
-     │
-     ▼
- Service
-```
-Additional relationships provide operational context:
-
-```text
                     ┌───> Team
                     │
 Dependency → Service ───> Environment
@@ -209,7 +196,7 @@ Dependency → Service ───> Environment
                     │          ▼
                     │        Region
                     │
-                    └───> Dependency
+                    └───> Downstream Service
 ```
 This structure allows the application to traverse the dependency graph and then associate the affected services with their owners, deployment environments, regions, and alternative dependencies.
 
@@ -312,10 +299,10 @@ The application exposes these relationships as potential alternatives or mitigat
 
 The overview operation combines the graph analysis into a single response containing:
 
-affected services and hop distance
-responsible teams
-affected environments and regions
-alternative dependencies
+- Affected services and hop distance
+- Responsible teams
+- Affected environments and regions
+- Alternative dependencies
 
 This allows the frontend to retrieve the complete impact analysis with a single API request.
 
@@ -408,10 +395,10 @@ The backend performs the required graph traversals against CognoDB and returns t
 
 The UI presents the results in separate sections:
 
-Affected Services — services within the calculated blast radius and their hop distance.
-Owners — teams responsible for affected services.
-Regions & Environments — deployment locations and environments affected.
-Alternatives — related or alternative dependency paths.
+- **Affected Services** — services within the calculated blast radius and their hop distance.
+- **Owners** — teams responsible for affected services.
+- **Regions & Environments** — deployment locations and environments affected.
+- **Alternatives** — related or alternative dependency paths.
 
 This allows a user to move from a single dependency to an operational view of its potential impact without manually querying the graph.
 
@@ -449,7 +436,6 @@ Spring Boot application
        ↓
 REST API / UI
 ```
-Once the graph has been populated, the application treats CognoDB as its persistent data source and does not reseed the database during normal startup.
 
 ## Local Development
 
@@ -464,7 +450,7 @@ Once the graph has been populated, the application treats CognoDB as its persist
 ### 1. Clone the repository
 
 ```bash
-git clone [<repository-url>](https://github.com/Jitbaul13-maker/supply-chain-graph-explorer)
+git clone https://github.com/Jitbaul13-maker/supply-chain-graph-explorer.git
 cd supply-chain-graph-explorer
 ```
 
@@ -570,7 +556,7 @@ Local
   PORT not set → 8081
 ```
 
-Continuous Deployment
+### Continuous Deployment
 
 The repository is connected to Railway through the Railway GitHub App.
 
