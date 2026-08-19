@@ -139,3 +139,17 @@ The application follows a simple layered architecture:
 │  Relationships               │
 └──────────────────────────────┘
 ```
+## Request flow
+
+### A typical request follows this path:
+
+- The user searches for a service or dependency through the web UI.
+- The frontend sends an HTTP request to the Spring Boot REST API.
+- GraphController receives the request and delegates the operation to GraphService.
+- GraphService coordinates the required graph operations.
+- The repository layer executes parameterized Cypher queries through the Neo4j Java Driver.
+- CognoDB performs the graph traversal and returns the results.
+- The backend converts the results into JSON.
+- The frontend uses the response to update the interface.
+
+This separation keeps HTTP handling, application logic, and graph queries independent from each other.
