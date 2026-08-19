@@ -274,9 +274,9 @@ At the core of the model is the dependency chain:
                     ┌───> Team
                     │
 Dependency → Service ───> Environment
-                    │          │
-                    │          ▼
-                    │        Region
+               ▲    │          │
+               |    │          ▼
+           Incident │        Region
                     │
                     └───> Downstream Service
 ```
@@ -355,7 +355,7 @@ How it works:
 
     MATCH (n) considers nodes in the graph.
 
-    The WHERE clause restricts the results to nodes labelled either Service or Dependency:
+The WHERE clause restricts the results to nodes labelled either Service or Dependency:
 
 ```cypher
 n:Service OR n:Dependency
@@ -370,6 +370,343 @@ toLower(n.name) CONTAINS toLower($query)
 The CASE expression determines whether the returned node is a service or dependency so that the frontend can display the appropriate result type.
 
 The query is limited to 20 results to keep the search response small and responsive.
+
+### 2. Direct Dependency Consumers
+
+The fundamental dependency relationship in the graph is:
+
+    Service ──SERVICE_DEPENDS_ON──> Dependency
+
+Therefore, when starting from a Dependency and looking for the services that depend on it, the relationship is traversed in the reverse direction.
+
+```cypher
+MATCH (d:Dependency {id: $dependencyId})
+      <-[:SERVICE_DEPENDS_ON]-
+      (s:Service)
+RETURN s.name AS service
+ORDER BY service
+```
+
+How it works
+
+The query first identifies the selected dependency:
+```cypher
+(d:Dependency {id: $dependencyId})
+```
+
+It then follows incoming SERVICE_DEPENDS_ON relationships to find services that directly depend on that dependency:
+```cypher
+<-[:SERVICE_DEPENDS_ON]-
+```
+This gives the immediate consumers of the dependency.
+
+For example:
+
+    Service 012 ──SERVICE_DEPENDS_ON──> Dependency 013
+    Service 013 ──SERVICE_DEPENDS_ON──> Dependency 013
+
+If Dependency 013 becomes unavailable, these services are immediately exposed to the failure.
+
+This direct-consumer relationship is also used by the owner, deployment, and incident queries described below.
+
+### 3. Dependency Traversal / Blast Radius
+
+The blast-radius query determines how far the impact of a dependency can propagate through the service dependency graph.
+
+The graph traversal is:
+```text
+Dependency
+    ↓
+Direct Service
+    ↓
+Downstream Service
+    ↓
+Downstream Service
+```
+The application traverses downstream service relationships up to three hops.
+```cypher
+MATCH (d:Dependency {id: $dependencyId})
+      <-[:SERVICE_DEPENDS_ON]-
+      (s:Service)
+
+
+MATCH path =
+      (s)-[:SERVICE_DEPENDS_ON*0..3]->
+      (downstream:Service)
+
+
+WITH downstream,
+     min(length(path)) AS hops
+
+
+RETURN downstream.name AS service,
+       hops
+ORDER BY hops, service
+```
+
+How it works
+
+The first part finds services that directly depend on the selected dependency:
+```cypher
+(d:Dependency)
+<-[:SERVICE_DEPENDS_ON]-
+(s:Service)
+```
+
+The second part follows service-to-service dependency relationships:
+```cypher
+(s)-[:SERVICE_DEPENDS_ON*0..3]->(downstream:Service)
+```
+The *0..3 is a variable-length relationship pattern.
+
+It means the query can traverse from zero to three relationship hops.
+
+The query then calculates the shortest discovered path to each affected service:
+```cypher
+min(length(path))
+```
+The result therefore contains both the affected service and its hop distance.
+
+For example:
+```text
+Dependency 013
+      │
+      ├── Service 012     0 hops
+      ├── Service 013     0 hops
+      ├── Service 062     0 hops
+      ├── Service 063     0 hops
+      │
+      └── Service 014     1 hop
+```
+A zero-hop service is a direct consumer of the dependency. Higher hop counts represent downstream propagation.
+
+Why this query is useful for a graph database
+
+The important part of this operation is the variable-length traversal:
+```cypher
+[:SERVICE_DEPENDS_ON*0..3]
+```
+The number of downstream services is not fixed. One dependency may affect a few services while another may propagate through a much larger service chain.
+
+In a relational schema, the same question can require either:
+
+- Multiple self-joins on a service-dependency table, with one join for each known hop depth, or
+- A recursive CTE to repeatedly traverse the dependency relationships.
+
+A graph database expresses this relationship traversal directly as part of the query.
+
+This is particularly useful for impact analysis because the question is fundamentally about connected paths through a dependency graph, rather than simply retrieving rows from one table.
+
+### 4. Responsible Owners
+
+Once the directly affected services are identified, the graph follows ownership relationships to determine which teams are responsible for those services.
+
+The relationship is:
+```cypher
+Service ──OWNED_BY──> Team
+MATCH (d:Dependency {id: $dependencyId})
+      <-[:SERVICE_DEPENDS_ON]-
+      (s:Service)
+      -[:OWNED_BY]->
+      (t:Team)
+
+
+RETURN DISTINCT
+       s.name AS service,
+       t.name AS owner
+ORDER BY service
+``` 
+How it works
+
+The query first finds services that directly depend on the selected dependency.
+
+It then follows:
+```cypher
+-[:OWNED_BY]->
+```
+to the team responsible for each service.
+
+The result is displayed in the UI as Responsible Owners.
+
+These are the teams associated with the services that are immediately exposed to the dependency failure and therefore are the primary teams to page when the dependency becomes unavailable.
+
+Example:
+```text
+Service 012 → Team 12
+Service 013 → Team 13
+Service 062 → Team 02
+Service 063 → Team 03
+```
+The owner query intentionally focuses on direct consumers rather than every downstream service in the complete blast radius.
+
+### 5. Deployment Impact
+
+The graph also models where services are deployed.
+
+The deployment relationship is:
+```text
+Service
+   ↓ DEPLOYED_IN
+Environment
+   ↓ RUNS_ON
+Region
+```
+The query follows that path:
+```cypher
+MATCH (d:Dependency {id: $dependencyId})
+      <-[:SERVICE_DEPENDS_ON]-
+      (s:Service)
+      -[:DEPLOYED_IN]->
+      (e:Environment)
+      -[:RUNS_ON]->
+      (r:Region)
+
+
+RETURN DISTINCT
+       s.name AS service,
+       e.name AS environment,
+       r.name AS region
+ORDER BY service
+```
+
+How it works
+
+The query starts with services that directly depend on the selected dependency.
+
+It then follows:
+```text
+Service → Environment → Region
+```
+to determine where those services are running.
+
+The result allows the UI to show deployment information such as:
+```text
+Service 012    Production · us-east
+Service 013    Production · eu-west
+Service 062    Sandbox    · us-east
+```
+This provides operational context around the dependency failure.
+
+The number of deployment entries does not represent the total blast radius. The blast-radius query can identify downstream services that are several hops away, while this query focuses on deployment information for directly affected services.
+
+### 6. Alternative Dependencies
+
+Dependencies can also be connected to alternative dependencies using:
+```text
+Dependency ──ALTERNATIVE_TO──> Dependency
+```
+The application uses this relationship to identify potential alternative or mitigation paths.
+```cypher
+MATCH (d:Dependency {id: $dependencyId})
+      -[:ALTERNATIVE_TO]->
+      (alt:Dependency)
+
+
+RETURN DISTINCT
+       alt.name AS alternative
+ORDER BY alternative
+```
+
+How it works
+
+The query starts from the selected dependency and follows its ALTERNATIVE_TO relationships.
+
+For example:
+```text
+Dependency 013
+      │
+      └──ALTERNATIVE_TO──> Dependency 021
+```
+This allows the application to expose possible alternatives that could be considered if the selected dependency becomes unavailable.
+
+The graph relationship makes this a direct neighborhood lookup rather than requiring a separate mapping structure.
+
+7. Incident Context
+
+The graph also contains operational incident information.
+
+The relationship is:
+```text
+Incident ──AFFECTS──> Service
+```
+The application uses this information to show incident context for services that directly consume the selected dependency.
+```cypher
+MATCH (d:Dependency {id: $dependencyId})
+      <-[:SERVICE_DEPENDS_ON]-
+      (s:Service)
+      <-[:AFFECTS]-
+      (i:Incident)
+
+
+RETURN DISTINCT
+       s.name AS service,
+       i.name AS incident,
+       i.severity AS severity
+ORDER BY service, incident
+```
+How it works
+
+The query first finds services that directly depend on the selected dependency.
+
+It then follows the AFFECTS relationship in reverse to find incidents associated with those services.
+
+The returned severity can be:
+```text
+LOW
+MEDIUM
+HIGH
+CRITICAL
+```
+The UI displays the incident alongside the corresponding service in the Blast Radius view.
+
+There is an important distinction between incident context and the blast radius:
+
+- The blast-radius query identifies the complete downstream impact of the dependency.
+- The incident query focuses on incidents associated with the services directly consuming the dependency.
+
+This allows the UI to distinguish between immediate operational context and the broader potential propagation of the failure.
+
+### 8. Aggregated Overview
+
+The application combines these graph operations into a single dependency overview request.
+
+The overview response contains:
+
+- Affected services and hop distance
+- Responsible owners
+- Deployment environments and regions
+- Alternative dependencies
+- Incident context for directly affected services
+
+Conceptually, the application performs:
+```text
+
+                         ┌──> Affected Services
+                         │
+                         ├──> Responsible Owners
+Dependency ── Overview ──┼──> Deployment Impact
+                         │
+                         ├──> Alternative Dependencies
+                         │
+                         └──> Incident Context
+```
+This allows the frontend to retrieve the complete impact analysis with a single API request rather than making separate requests for every panel.
+
+The result is a single operational view of a dependency:
+```text
+Dependency
+    │
+    ├── Direct consumers
+    │       ├── Responsible teams
+    │       ├── Deployment locations
+    │       └── Incident context
+    │
+    ├── Downstream services
+    │       └── Blast radius
+    │
+    └── Alternative dependencies
+```
+This is the central graph-oriented workflow of the application: starting from one dependency and traversing multiple relationship types to derive operationally useful information from the connected data.
 
 ## REST API
 
