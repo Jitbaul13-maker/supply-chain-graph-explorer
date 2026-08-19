@@ -216,10 +216,10 @@ The application models the supply-chain dependency landscape as a connected grap
                              │    Team     │
                              └──────┬──────┘
                                     │ OWNED_BY
-                         DEPENDS_ON │ (reverse: Service → Team)
+                                    │ (reverse: Service → Team)
                                     │
 ┌─────────────┐                     ▼
-│ Dependency  │              ┌─────────────┐
+│ Dependency  │  DEPENDS_ON  ┌─────────────┐
 |             | ───────────► |             |
 │             │              │   Service   │
 │ id: string  │◄───────────  │             │
