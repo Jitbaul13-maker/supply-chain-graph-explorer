@@ -43,6 +43,7 @@ A dependency can affect a service, which can affect another service, which can b
 
 Conceptually, the traversal looks like:
 
+```text
 Dependency
     ↓
 Service
@@ -52,6 +53,8 @@ Service
 Environment
     ↓
 Region
+
+```
 
 with ownership and alternative paths attached to the graph.
 
